@@ -1,0 +1,11 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: trades
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lbom
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: trades
+    ports:
+      - "5432:5432"
