@@ -1,7 +1,7 @@
 package com.finance.business.service;
 
 import com.finance.business.persistence.revenue.BusinessRevenue;
-import com.finance.business.persistence.revenue.BusinessRevenueRepository;
+import com.finance.business.persistence.revenue.BusinessRevenueRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +11,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BusinessRevenueService {
 
-    private final BusinessRevenueRepository repository;
+    private final BusinessRevenueRepo repository;
 
     public List<BusinessRevenue> getAll() { return repository.findAll(); }
     public void save(BusinessRevenue revenue) { repository.save(revenue); }

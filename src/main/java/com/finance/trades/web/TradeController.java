@@ -9,7 +9,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/trades")
+@RequestMapping("/finance/trades")
 public class TradeController {
 
     private final TradeService tradeService;

@@ -6,7 +6,7 @@ public record BusinessDto(
     Long id,
     String name,
     String idea,
-    BigDecimal overallAmount,
-    BigDecimal overallProfit
+    BigDecimal expense,
+    BigDecimal revenue
 ) {}
 

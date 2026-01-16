@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/business/expenses")
+@RequestMapping("/finance/business/expenses")
 @RequiredArgsConstructor
 public class BusinessExpensesController {
 

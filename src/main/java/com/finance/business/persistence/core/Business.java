@@ -22,11 +22,11 @@ public class Business {
     @Column(name = "idea", length = Integer.MAX_VALUE)
     private String idea;
 
-    @Column(name = "overall_amount", precision = 10, scale = 2)
-    private BigDecimal overallAmount;
+    @Column(name = "expense", precision = 10, scale = 2)
+    private BigDecimal overallExpense;
 
-    @Column(name = "overall_profit", precision = 10, scale = 2)
-    private BigDecimal overallProfit;
+    @Column(name = "revenue", precision = 10, scale = 2)
+    private BigDecimal overallRevenue;
 
 
 }

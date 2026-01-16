@@ -2,4 +2,4 @@ package com.finance.business.persistence.expenses;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface BusinessExpensesRepository extends JpaRepository<BusinessExpenses, Long> {}
+public interface BusinessExpensesRepo extends JpaRepository<BusinessExpenses, Long> {}

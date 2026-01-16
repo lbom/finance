@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/personal/revenue")
+@RequestMapping("/finance/personal/revenue")
 @RequiredArgsConstructor
 public class PersonalRevenueController {
 
