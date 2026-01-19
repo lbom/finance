@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box, Paper, Typography, Button, Grid, Dialog, DialogTitle,
-    DialogContent, DialogActions, TextField, MenuItem, Chip, IconButton
+    DialogContent, DialogActions, TextField, MenuItem, Chip, Avatar
 } from '@mui/material';
-import { Add, ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import { Add, Wallet, ReceiptLong, TrendingUp, TrendingDown } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints';
@@ -12,32 +12,44 @@ import { api } from '../api/endpoints';
 const RevenueTypes = ["SALARY", "DIVIDENDS", "FREELANCE", "GIFT", "OTHER"];
 const ExpenseTypes = ["FOOD", "RENT", "TRANSPORT", "ENTERTAINMENT", "HEALTH", "TAXES"];
 
-// Helper for safe currency formatting
-const formatMoney = (val) => val ? `$${Number(val).toLocaleString()}` : '$0.00';
+// Safe Currency Formatter
+const formatMoney = (val) => {
+    if (val == null) return '-';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+};
 
-const FinanceSection = ({ title, data, isLoading, onAdd, color }) => {
+// --- Reusable Section Component ---
+const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type }) => {
 
-    // 1. Data Mapping: Ensure we always have a 'type' field
+    // Determine Styles based on Type (Income vs Expense)
+    const isIncome = type === 'income';
+    const accentColor = isIncome ? 'primary.main' : 'error.main';
+    const chipBg = isIncome ? 'secondary.main' : '#FFEBEE'; // Mint vs Soft Red
+    const chipText = isIncome ? 'primary.dark' : 'error.dark';
+    const Icon = isIncome ? Wallet : ReceiptLong;
+
     const rows = (data || []).map(item => ({
         ...item,
-        // Check all possible field names from your Java DTOs
         type: item.expenseType || item.revenueType || item.type || 'UNKNOWN'
     }));
 
     const columns = [
-        { field: 'id', headerName: 'ID', width: 50 },
         {
             field: 'type',
             headerName: 'Category',
             flex: 1,
-            minWidth: 120, // FIX: Prevents "Ca..." cut-off
             renderCell: (params) => (
                 <Chip
                     label={params.value?.replace(/_/g, ' ')}
                     size="small"
-                    variant="outlined"
-                    color={color}
-                    sx={{ fontWeight: 500, minWidth: 80, justifyContent: 'center' }}
+                    sx={{
+                        bgcolor: chipBg,
+                        color: chipText,
+                        fontWeight: 600,
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        textTransform: 'capitalize'
+                    }}
                 />
             )
         },
@@ -45,53 +57,60 @@ const FinanceSection = ({ title, data, isLoading, onAdd, color }) => {
             field: 'amount',
             headerName: 'Amount',
             width: 120,
-            type: 'number',
             align: 'right',
             headerAlign: 'right',
-            // FIX: DataGrid v6 passes the value directly, not params.value
-            valueFormatter: (value) => formatMoney(value)
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: accentColor }}>
+                    {isIncome ? <TrendingUp fontSize="small" /> : <TrendingDown fontSize="small" />}
+                    <Typography fontWeight="bold" fontSize="0.9rem">
+                        {formatMoney(params.value)}
+                    </Typography>
+                </Box>
+            )
         },
     ];
 
     return (
-        <Paper
-            elevation={2}
-            sx={{
-                p: 2,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: 2
-            }}
-        >
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Box display="flex" alignItems="center" gap={1}>
-                    {color === 'success' ? <ArrowUpward color="success" /> : <ArrowDownward color="error" />}
-                    <Typography variant="h6" fontWeight="bold">{title}</Typography>
+        <Paper sx={{ p: 0, height: '100%', borderRadius: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+
+            {/* Card Header */}
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <Avatar sx={{ bgcolor: chipBg, color: chipText }} variant="rounded">
+                        <Icon fontSize="small" />
+                    </Avatar>
+                    <Box>
+                        <Typography variant="h6" fontSize="1rem" fontWeight="bold">{title}</Typography>
+                        <Typography variant="caption" color="text.secondary">{subtitle}</Typography>
+                    </Box>
                 </Box>
-                <Button size="small" startIcon={<Add />} variant="outlined" color={color} onClick={onAdd}>
+                <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<Add />}
+                    onClick={onAdd}
+                    sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary', '&:hover': { borderColor: accentColor, color: accentColor } }}
+                >
                     Add
                 </Button>
             </Box>
 
-            {/* FIX: autoHeight makes the table shrink/grow with data, preventing empty whitespace */}
-            <DataGrid
-                rows={rows}
-                columns={columns}
-                loading={isLoading}
-                disableRowSelectionOnClick
-                density="comfortable"
-                autoHeight={rows.length > 0}
-                sx={{
-                    border: 'none',
-                    '& .MuiDataGrid-cell': { fontSize: '0.9rem' },
-                    '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
-                    minHeight: 200 // Minimum height if empty
-                }}
-                initialState={{
-                    pagination: { paginationModel: { pageSize: 10 } }
-                }}
-            />
+            {/* Grid Content */}
+            <Box sx={{ flexGrow: 1, minHeight: 400 }}>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    loading={isLoading}
+                    disableRowSelectionOnClick
+                    rowHeight={55}
+                    initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+                    sx={{
+                        border: 'none',
+                        '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                        '& .MuiDataGrid-columnHeaders': { bgcolor: 'transparent' }
+                    }}
+                />
+            </Box>
         </Paper>
     );
 };
@@ -99,7 +118,7 @@ const FinanceSection = ({ title, data, isLoading, onAdd, color }) => {
 export const Personal = () => {
     const queryClient = useQueryClient();
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [activeSection, setActiveSection] = useState(null);
+    const [activeSection, setActiveSection] = useState(null); // 'REVENUE' or 'EXPENSE'
 
     const { data: revenues, isLoading: l1 } = useQuery({ queryKey: ['revenue'], queryFn: api.personal.revenue });
     const { data: expenses, isLoading: l2 } = useQuery({ queryKey: ['expenses'], queryFn: api.personal.expenses });
@@ -120,7 +139,6 @@ export const Personal = () => {
 
     const handleOpen = (section) => {
         setActiveSection(section);
-        // Default to first option to prevent empty select
         reset({ type: section === 'REVENUE' ? RevenueTypes[0] : ExpenseTypes[0], amount: '' });
         setDialogOpen(true);
     };
@@ -140,32 +158,47 @@ export const Personal = () => {
 
     return (
         <Box sx={{ pb: 5 }}>
+            {/* Page Header */}
+            <Box mb={4}>
+                <Typography variant="h4" gutterBottom>Cash Flow</Typography>
+                <Typography variant="body1" color="text.secondary">
+                    Track your personal income streams and daily expenditures.
+                </Typography>
+            </Box>
+
             <Grid container spacing={3}>
+                {/* Income Column */}
                 <Grid item xs={12} md={6}>
                     <FinanceSection
-                        title="Income"
+                        title="Income Streams"
+                        subtitle="Salary, Dividends, etc."
+                        type="income"
                         data={revenues}
                         isLoading={l1}
-                        color="success"
                         onAdd={() => handleOpen('REVENUE')}
                     />
                 </Grid>
 
+                {/* Expense Column */}
                 <Grid item xs={12} md={6}>
                     <FinanceSection
                         title="Expenses"
+                        subtitle="Rent, Food, Lifestyle"
+                        type="expense"
                         data={expenses}
                         isLoading={l2}
-                        color="error"
                         onAdd={() => handleOpen('EXPENSE')}
                     />
                 </Grid>
             </Grid>
 
-            <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="xs">
+            {/* Shared Dialog */}
+            <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <DialogTitle>
-                        {activeSection === 'REVENUE' ? 'Add Income' : 'Log Expense'}
+                        <Typography variant="h6" fontWeight="bold">
+                            {activeSection === 'REVENUE' ? 'Add Income' : 'Log Expense'}
+                        </Typography>
                     </DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
@@ -174,7 +207,7 @@ export const Personal = () => {
                                 control={control}
                                 rules={{ required: true }}
                                 render={({ field }) => (
-                                    <TextField {...field} select label="Category" fullWidth>
+                                    <TextField {...field} select label="Category" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
                                         {(activeSection === 'REVENUE' ? RevenueTypes : ExpenseTypes).map(opt => (
                                             <MenuItem key={opt} value={opt}>{opt.replace(/_/g, ' ')}</MenuItem>
                                         ))}
@@ -191,18 +224,22 @@ export const Personal = () => {
                                         label="Amount"
                                         type="number"
                                         fullWidth
-                                        InputProps={{ startAdornment: '$' }}
+                                        InputProps={{
+                                            startAdornment: '$',
+                                            sx: { borderRadius: 2, fontSize: '1.2rem', fontWeight: 600 }
+                                        }}
                                     />
                                 )}
                             />
                         </Box>
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleClose}>Cancel</Button>
+                    <DialogActions sx={{ p: 3 }}>
+                        <Button onClick={handleClose} sx={{ color: 'text.secondary' }}>Cancel</Button>
                         <Button
                             type="submit"
                             variant="contained"
                             color={activeSection === 'REVENUE' ? "success" : "error"}
+                            sx={{ borderRadius: 2, px: 3 }}
                         >
                             Save
                         </Button>

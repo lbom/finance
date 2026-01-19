@@ -2,20 +2,20 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box, Button, Typography, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, MenuItem, Grid, Chip, Paper
+    DialogActions, TextField, MenuItem, Grid, Chip, Paper, Avatar
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, TrendingUp, TrendingDown, HourglassEmpty, ShowChart } from '@mui/icons-material';
+import { Add, TrendingUp, TrendingDown, HourglassEmpty, ShowChart, CandlestickChart } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints.js';
 
 const TradeTypes = ["POLITICAL_INSIGHT", "ONCHAIN_DATA", "ECONOMIC_DATA", "STRAIGHT_FINANCIAL"];
 
-// Helper for currency formatting
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-});
+// FIX: Safe formatter
+const formatMoney = (val) => {
+    if (val == null) return '-';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+};
 
 const dateFormatter = (dateStr) => {
     if (!dateStr) return '-';
@@ -53,7 +53,7 @@ export const Trades = () => {
             field: 'startDate',
             headerName: 'Date Opened',
             width: 160,
-            valueFormatter: (params) => dateFormatter(params) // Fixed for DataGrid v6+ if needed, but params usually works for formatter
+            valueFormatter: (value) => dateFormatter(value)
         },
         {
             field: 'type',
@@ -61,11 +61,16 @@ export const Trades = () => {
             width: 180,
             renderCell: (params) => (
                 <Chip
-                    label={params.value?.replace('_', ' ')}
+                    label={params.value?.replace(/_/g, ' ')} // clean formatting
                     size="small"
-                    color={params.value?.includes('POLITICAL') ? 'secondary' : 'primary'}
-                    variant="outlined"
-                    sx={{ fontWeight: 500, fontSize: '0.75rem' }}
+                    // STYLE: Mint background, dark green text
+                    sx={{
+                        bgcolor: 'secondary.main',
+                        color: 'primary.dark',
+                        fontWeight: 600,
+                        border: 'none',
+                        fontSize: '0.75rem'
+                    }}
                 />
             )
         },
@@ -76,7 +81,7 @@ export const Trades = () => {
             type: 'number',
             headerAlign: 'right',
             align: 'right',
-            valueFormatter: (value) => currencyFormatter.format(value) // Safe v6 formatter
+            valueFormatter: (value) => formatMoney(value)
         },
         {
             field: 'profit',
@@ -92,16 +97,16 @@ export const Trades = () => {
                             icon={<HourglassEmpty sx={{ fontSize: 14 }} />}
                             label="OPEN"
                             size="small"
-                            sx={{ bgcolor: 'action.hover', color: 'text.secondary', fontWeight: 'bold' }}
+                            sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 'bold' }}
                         />
                     );
                 }
                 const isProfit = value >= 0;
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'success.main' : 'error.main' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'primary.main' : 'error.main' }}>
                         {isProfit ? <TrendingUp fontSize="small" /> : <TrendingDown fontSize="small" />}
-                        <Typography fontWeight="bold">
-                            {currencyFormatter.format(value)}
+                        <Typography fontWeight="bold" fontSize="0.9rem">
+                            {formatMoney(value)}
                         </Typography>
                     </Box>
                 );
@@ -111,96 +116,102 @@ export const Trades = () => {
             field: 'reason',
             headerName: 'Thesis / Reason',
             flex: 1,
-            minWidth: 200
+            minWidth: 250,
+            renderCell: (params) => (
+                <Typography variant="body2" color="text.secondary" noWrap sx={{ py: 1.5 }}>
+                    {params.value}
+                </Typography>
+            )
         },
     ];
 
     return (
-        <Box>
-            {/* THE CARD CONTAINER */}
-            <Paper
-                elevation={2}
-                sx={{
-                    p: 2,
-                    height: 650,
-                    width: '100%',
-                    borderRadius: 3, // Rounded corners like the image
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}
-            >
-                {/* 1. HEADER ROW: Title Left, Button Right */}
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                        <ShowChart color="primary" />
-                        <Typography variant="h6" fontWeight="bold">
-                            Recent Trades
-                        </Typography>
+        <Box sx={{ pb: 4 }}>
+
+            {/* 2. Main Card */}
+            <Paper sx={{ p: 0, overflow: 'hidden' }}>
+
+                {/* Card Toolbar */}
+                <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Avatar sx={{ bgcolor: 'secondary.main', color: 'primary.main' }} variant="rounded">
+                            <CandlestickChart />
+                        </Avatar>
+                        <Box>
+                            <Typography variant="h6">Recent Trades</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                {trades?.length || 0} Entries logged
+                            </Typography>
+                        </Box>
                     </Box>
 
-                    {/* Button moved here */}
                     <Button
-                        variant="outlined"
+                        variant="contained"
                         startIcon={<Add />}
                         onClick={() => setOpen(true)}
-                        size="medium"
-                        sx={{
-                            textTransform: 'none', // Keeps it looking like "Add" not "ADD"
-                            fontWeight: 'bold',
-                            borderRadius: 2
-                        }}
+                        sx={{ borderRadius: 3, px: 3 }}
                     >
                         Log Trade
                     </Button>
                 </Box>
 
-                {/* 2. THE GRID */}
-                <DataGrid
-                    rows={trades || []}
-                    columns={columns}
-                    loading={isLoading}
-                    disableRowSelectionOnClick
-                    initialState={{
-                        pagination: { paginationModel: { pageSize: 10 } },
-                        sorting: { sortModel: [{ field: 'startDate', sort: 'desc' }] },
-                    }}
-                    pageSizeOptions={[10, 25, 50]}
-                    sx={{
-                        border: 'none',
-                        '& .MuiDataGrid-columnHeaders': {
-                            bgcolor: 'background.default',
-                            textTransform: 'uppercase',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            color: 'text.secondary'
-                        },
-                        '& .MuiDataGrid-row:hover': {
-                            bgcolor: 'action.hover'
-                        }
-                    }}
-                />
+                {/* DataGrid */}
+                <Box sx={{ height: 650, width: '100%' }}>
+                    <DataGrid
+                        rows={trades || []}
+                        columns={columns}
+                        loading={isLoading}
+                        disableRowSelectionOnClick
+                        rowHeight={60}
+                        initialState={{
+                            pagination: { paginationModel: { pageSize: 10 } },
+                            sorting: { sortModel: [{ field: 'startDate', sort: 'desc' }] },
+                        }}
+                        pageSizeOptions={[10, 25, 50]}
+                        sx={{
+                            border: 'none',
+                            '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                        }}
+                    />
+                </Box>
             </Paper>
 
             {/* Dialog Form */}
-            <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+            <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <DialogTitle>Log New Trade</DialogTitle>
+                    <DialogTitle sx={{ pb: 1 }}>
+                        <Typography variant="h6" fontWeight="bold">Log New Trade</Typography>
+                        <Typography variant="body2" color="text.secondary">Enter details for a new market position.</Typography>
+                    </DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid item xs={12}>
                                 <Controller name="type" control={control} render={({ field }) => (
-                                    <TextField {...field} select label="Strategy Type" fullWidth>{TradeTypes.map((o) => <MenuItem key={o} value={o}>{o}</MenuItem>)}</TextField>
+                                    <TextField {...field} select label="Strategy Type" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
+                                        {TradeTypes.map((o) => <MenuItem key={o} value={o}>{o.replace(/_/g, ' ')}</MenuItem>)}
+                                    </TextField>
                                 )} />
                             </Grid>
-                            <Grid item xs={6}><Controller name="institutionId" control={control} render={({ field }) => <TextField {...field} label="Inst ID" type="number" fullWidth />} /></Grid>
-                            <Grid item xs={6}><Controller name="symbolId" control={control} render={({ field }) => <TextField {...field} label="Sym ID" type="number" fullWidth />} /></Grid>
-                            <Grid item xs={6}><Controller name="amount" control={control} render={({ field }) => <TextField {...field} label="Amount" type="number" fullWidth />} /></Grid>
-                            <Grid item xs={12}><Controller name="reason" control={control} render={({ field }) => <TextField {...field} label="Reason" multiline rows={3} fullWidth />} /></Grid>
+
+                            <Grid item xs={6}><Controller name="institutionId" control={control} render={({ field }) => <TextField {...field} label="Inst ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />} /></Grid>
+                            <Grid item xs={6}><Controller name="symbolId" control={control} render={({ field }) => <TextField {...field} label="Sym ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />} /></Grid>
+
+                            <Grid item xs={12}>
+                                <Controller name="amount" control={control} render={({ field }) => (
+                                    <TextField {...field} label="Amount" type="number" fullWidth InputProps={{ startAdornment: '$', sx: { borderRadius: 2, fontSize: '1.2rem', fontWeight: 600 } }} />
+                                )} />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <Controller name="reason" control={control} render={({ field }) => (
+                                    <TextField {...field} label="Reason / Thesis" multiline rows={3} fullWidth placeholder="Why did you take this trade?" InputProps={{ sx: { borderRadius: 2 } }} />
+                                )} />
+                            </Grid>
                         </Grid>
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setOpen(false)}>Cancel</Button>
-                        <Button type="submit" variant="contained">Save</Button>
+                    <DialogActions sx={{ p: 3 }}>
+                        <Button onClick={() => setOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
+                        <Button type="submit" variant="contained" sx={{ px: 4, borderRadius: 3 }}>Save</Button>
                     </DialogActions>
                 </form>
             </Dialog>

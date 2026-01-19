@@ -2,20 +2,20 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box, Button, Typography, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, MenuItem, Grid, Chip, Tooltip, Paper
+    DialogActions, TextField, MenuItem, Grid, Chip, Tooltip, Paper, Avatar
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, TrendingUp, TrendingDown, AccessTime, Savings, PieChart } from '@mui/icons-material'; // Added PieChart
+import { Add, TrendingUp, TrendingDown, AccessTime, Savings, PieChart, AccountBalance } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
-// Example types based on your DTO
 const InvestTypes = ["REAL_ESTATE", "BONDS", "STOCKS_LONG", "VENTURE", "CRYPTO_HOLD"];
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-});
+// FIX: Safe formatter that won't crash on null/undefined
+const formatMoney = (val) => {
+    if (val == null) return '-';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+};
 
 const dateFormatter = (dateStr) => {
     if (!dateStr) return '-';
@@ -44,18 +44,13 @@ export const Investments = () => {
 
     const { control, handleSubmit, reset } = useForm({
         defaultValues: {
-            type: 'STOCKS_LONG',
-            institutionId: 1,
-            symbolId: 1,
-            reason: '',
-            amount: 0,
-            startDate: new Date().toISOString().slice(0, 16), // Format for datetime-local input
-            endDate: '' // Optional for investments
+            type: 'STOCKS_LONG', institutionId: 1, symbolId: 1, reason: '', amount: 0,
+            startDate: new Date().toISOString().slice(0, 16),
+            endDate: ''
         }
     });
 
     const onSubmit = (data) => {
-        // Ensure standard ISO format for backend
         const payload = {
             ...data,
             startDate: new Date(data.startDate).toISOString(),
@@ -65,201 +60,192 @@ export const Investments = () => {
     };
 
     const columns = [
-        // 1. TIMELINE: Start vs End is crucial for investments
         {
             field: 'startDate',
             headerName: 'Inv. Date',
-            width: 120,
-            valueFormatter: (value) => dateFormatter(value) // Safe v6 formatter
+            width: 130,
+            valueFormatter: (value) => dateFormatter(value)
         },
         {
             field: 'endDate',
             headerName: 'Maturity',
-            width: 120,
+            width: 130,
             renderCell: (params) => (
-                <Typography variant="body2" color={params.value ? 'text.primary' : 'text.disabled'}>
+                <Typography variant="body2" color={params.value ? 'text.secondary' : 'primary.main'} fontWeight={params.value ? 400 : 600} fontSize="0.85rem">
                     {params.value ? dateFormatter(params.value) : 'Perpetual'}
                 </Typography>
             )
         },
-
-        // 2. CATEGORY
         {
             field: 'type',
             headerName: 'Asset Class',
-            width: 150,
+            width: 160,
             renderCell: (params) => (
                 <Chip
-                    icon={<Savings sx={{ fontSize: 16 }} />}
+                    icon={<AccountBalance sx={{ fontSize: 16 }} />}
                     label={params.value?.replace('_', ' ')}
                     size="small"
-                    color="info"
-                    variant="outlined"
-                    sx={{ fontWeight: 500, fontSize: '0.75rem' }}
+                    // STYLE UPDATE: Soft Mint look
+                    sx={{
+                        bgcolor: 'secondary.main',
+                        color: 'primary.dark',
+                        fontWeight: 600,
+                        border: 'none'
+                    }}
                 />
             )
         },
-
-        // 3. PRINCIPAL
         {
             field: 'amount',
             headerName: 'Principal',
             width: 140,
             type: 'number',
-            headerAlign: 'right',
             align: 'right',
-            valueFormatter: (value) => currencyFormatter.format(value)
+            headerAlign: 'right',
+            valueFormatter: (value) => formatMoney(value) // FIX: Uses safe formatter
         },
-
-        // 4. RETURNS (Highlighted)
         {
             field: 'profit',
             headerName: 'Returns',
-            width: 140,
-            headerAlign: 'right',
+            width: 150,
             align: 'right',
+            headerAlign: 'right',
             renderCell: (params) => {
                 const value = params.value;
                 if (value === null) {
                     return (
-                        <Tooltip title="Investment Active">
+                        <Tooltip title="Position Open">
                             <Chip
                                 icon={<AccessTime sx={{ fontSize: 14 }} />}
                                 label="ACTIVE"
                                 size="small"
-                                sx={{ bgcolor: 'action.selected', color: 'text.secondary', fontWeight: 'bold' }}
+                                sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 'bold' }}
                             />
                         </Tooltip>
                     );
                 }
-
                 const isProfit = value >= 0;
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'success.main' : 'error.main' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'primary.main' : 'error.main' }}>
                         {isProfit ? <TrendingUp fontSize="small" /> : <TrendingDown fontSize="small" />}
-                        <Typography fontWeight="bold">
-                            {currencyFormatter.format(value)}
+                        <Typography fontWeight="bold" fontSize="0.9rem">
+                            {formatMoney(value)}
                         </Typography>
                     </Box>
                 );
             }
         },
-
-        // 5. THESIS
         {
             field: 'reason',
-            headerName: 'Investment Thesis',
+            headerName: 'Thesis',
             flex: 1,
-            minWidth: 200
+            minWidth: 220,
+            renderCell: (params) => (
+                <Typography variant="body2" color="text.secondary" noWrap sx={{ py: 1.5 }}>
+                    {params.value}
+                </Typography>
+            )
         },
     ];
 
     return (
-        <Box>
+        <Box sx={{ pb: 4 }}>
+            {/* 2. Main Card */}
+            <Paper sx={{ p: 0, overflow: 'hidden' }}> {/* p=0 allows header to sit flush */}
 
-            <Paper
-                elevation={2}
-                sx={{
-                    p: 2,
-                    height: 650,
-                    width: '100%',
-                    borderRadius: 3,
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}
-            >
-                {/* 1. HEADER ROW */}
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                        <PieChart color="primary" />
-                        <Typography variant="h6" fontWeight="bold">
-                            Active Holdings
-                        </Typography>
+                {/* Card Toolbar */}
+                <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Avatar sx={{ bgcolor: 'secondary.main', color: 'primary.main' }} variant="rounded">
+                            <PieChart />
+                        </Avatar>
+                        <Box>
+                            <Typography variant="h6">Active Holdings</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                {investments?.length || 0} Positions managed
+                            </Typography>
+                        </Box>
                     </Box>
-
                     <Button
-                        variant="outlined"
+                        variant="contained"
                         startIcon={<Add />}
                         onClick={() => setOpen(true)}
-                        sx={{
-                            textTransform: 'none',
-                            fontWeight: 'bold',
-                            borderRadius: 2
-                        }}
+                        sx={{ borderRadius: 3, px: 3 }}
                     >
                         New Position
                     </Button>
                 </Box>
 
-                {/* 2. THE GRID */}
-                <DataGrid
-                    rows={investments || []}
-                    columns={columns}
-                    loading={isLoading}
-                    disableRowSelectionOnClick
-                    initialState={{
-                        pagination: { paginationModel: { pageSize: 10 } },
-                        sorting: { sortModel: [{ field: 'startDate', sort: 'desc' }] },
-                    }}
-                    pageSizeOptions={[10, 25]}
-                    sx={{
-                        border: 'none',
-                        '& .MuiDataGrid-columnHeaders': {
-                            bgcolor: 'background.default',
-                            textTransform: 'uppercase',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            color: 'text.secondary'
-                        },
-                        '& .MuiDataGrid-row:hover': {
-                            bgcolor: 'action.hover'
-                        }
-                    }}
-                />
+                {/* DataGrid */}
+                <Box sx={{ height: 600, width: '100%' }}>
+                    <DataGrid
+                        rows={investments || []}
+                        columns={columns}
+                        loading={isLoading}
+                        disableRowSelectionOnClick
+                        rowHeight={60} // Taller rows for modern feel
+                        initialState={{
+                            pagination: { paginationModel: { pageSize: 10 } },
+                            sorting: { sortModel: [{ field: 'startDate', sort: 'desc' }] },
+                        }}
+                        pageSizeOptions={[10, 25]}
+                        sx={{
+                            border: 'none',
+                            // Remove column separators
+                            '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                        }}
+                    />
+                </Box>
             </Paper>
 
-            <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+            {/* Dialog Form */}
+            <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <DialogTitle>Add Investment</DialogTitle>
+                    <DialogTitle sx={{ pb: 1 }}>
+                        <Typography variant="h6" fontWeight="bold">New Investment</Typography>
+                        <Typography variant="body2" color="text.secondary">Commit capital to a new long-term position.</Typography>
+                    </DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid item xs={12}>
                                 <Controller name="type" control={control} render={({ field }) => (
-                                    <TextField {...field} select label="Asset Class" fullWidth>
-                                        {InvestTypes.map((o) => <MenuItem key={o} value={o}>{o.replace('_', ' ')}</MenuItem>)}
+                                    <TextField {...field} select label="Asset Class" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
+                                        {InvestTypes.map((o) => <MenuItem key={o} value={o}>{o.replace(/_/g, ' ')}</MenuItem>)}
                                     </TextField>
                                 )} />
                             </Grid>
-                            <Grid item xs={6}><Controller name="institutionId" control={control} render={({ field }) => <TextField {...field} label="Institution ID" type="number" fullWidth />} /></Grid>
-                            <Grid item xs={6}><Controller name="symbolId" control={control} render={({ field }) => <TextField {...field} label="Symbol ID" type="number" fullWidth />} /></Grid>
+
+                            {/* IDs in a secondary row */}
+                            <Grid item xs={6}><Controller name="institutionId" control={control} render={({ field }) => <TextField {...field} label="Institution ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} /> } /></Grid>
+                            <Grid item xs={6}><Controller name="symbolId" control={control} render={({ field }) => <TextField {...field} label="Symbol ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} /> } /></Grid>
 
                             <Grid item xs={12}>
                                 <Controller name="amount" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Principal Amount" type="number" fullWidth InputProps={{ startAdornment: '$' }} />
+                                    <TextField {...field} label="Principal Amount" type="number" fullWidth InputProps={{ startAdornment: '$', sx: { borderRadius: 2, fontSize: '1.2rem', fontWeight: 600 } }} />
                                 )} />
                             </Grid>
 
                             <Grid item xs={6}>
                                 <Controller name="startDate" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Start Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} />
+                                    <TextField {...field} label="Start Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} InputProps={{ sx: { borderRadius: 2 } }} />
                                 )} />
                             </Grid>
                             <Grid item xs={6}>
                                 <Controller name="endDate" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Target End Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} helperText="Leave empty if perpetual" />
+                                    <TextField {...field} label="Maturity Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} helperText="Optional (for bonds/fixed term)" InputProps={{ sx: { borderRadius: 2 } }} />
                                 )} />
                             </Grid>
 
                             <Grid item xs={12}>
                                 <Controller name="reason" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Investment Thesis" multiline rows={3} fullWidth placeholder="Why are we holding this?" />
+                                    <TextField {...field} label="Investment Thesis" multiline rows={3} fullWidth placeholder="Rationale for this allocation..." InputProps={{ sx: { borderRadius: 2 } }} />
                                 )} />
                             </Grid>
                         </Grid>
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setOpen(false)}>Cancel</Button>
-                        <Button type="submit" variant="contained">Commit Capital</Button>
+                    <DialogActions sx={{ p: 3 }}>
+                        <Button onClick={() => setOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
+                        <Button type="submit" variant="contained" sx={{ px: 4, borderRadius: 3 }}>Commit</Button>
                     </DialogActions>
                 </form>
             </Dialog>

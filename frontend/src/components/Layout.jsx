@@ -49,10 +49,10 @@ export const Layout = () => {
                     </Avatar>
                     <Box>
                         <Typography variant="h6" fontWeight="800" color="primary.main" lineHeight={1.2}>
-                            Green
+                            Green Money
                         </Typography>
                         <Typography variant="caption" color="text.secondary" fontWeight="500">
-                            Money Tracker
+                            Tracker
                         </Typography>
                     </Box>
                 </Box>
