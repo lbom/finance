@@ -40,7 +40,7 @@ export const Login = () => {
         >
             <Paper elevation={3} sx={{ p: 5, width: '100%', maxWidth: 400, borderRadius: 4, textAlign: 'center' }}>
                 <Typography variant="h4" color="primary.main" gutterBottom sx={{ fontWeight: 'bold' }}>
-                    GreenFinance
+                    Finance
                 </Typography>
                 <Typography variant="body2" color="text.secondary" mb={4}>
                     Sign in to manage your portfolio

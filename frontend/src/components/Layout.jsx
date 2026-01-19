@@ -1,9 +1,8 @@
 import React from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, AppBar } from '@mui/material';
-import { ShowChart, Dashboard as DashboardIcon } from '@mui/icons-material';
+import { PieChart, ShowChart, Dashboard as DashboardIcon } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { Logout } from '@mui/icons-material';
-// import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 240;
 
@@ -20,13 +19,14 @@ export const Layout = () => {
     const menuItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
         { text: 'Trades', icon: <ShowChart />, path: '/trades' },
+        { text: 'Investments', icon: <PieChart />, path: '/investments' },
     ];
 
     return (
         <Box sx={{ display: 'flex' }}>
             <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, bgcolor: 'primary.dark' }} elevation={0}>
                 <Toolbar>
-                    <Typography variant="h6" noWrap component="div">GreenFinance</Typography>
+                    <Typography variant="h6" noWrap component="div">Finance</Typography>
                 </Toolbar>
             </AppBar>
             <Drawer

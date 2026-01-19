@@ -12,6 +12,8 @@ export const api = {
         profit: () => client.get('/finance/trades/profit').then(r => r.data),
     },
     invest: {
+        list: () => client.get('/finance/invest').then(r => r.data),
+        create: (data) => client.post('/finance/invest', data),
         profit: () => client.get('/finance/invest/profit').then(r => r.data),
     },
     personal: {
