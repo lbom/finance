@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Grid, Paper, Typography, Box } from '@mui/material';
-import { api } from '../api/client';
+import { api } from '../api/endpoints.js';
 
 const StatCard = ({ title, value, isLoading }) => (
     <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

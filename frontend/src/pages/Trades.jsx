@@ -4,7 +4,7 @@ import { Box, Button, Typography, Dialog, DialogTitle, DialogContent, DialogActi
 import { DataGrid } from '@mui/x-data-grid';
 import { Add } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
-import { api } from '../api/client';
+import { api } from '../api/endpoints.js';
 
 const TradeTypes = ["POLITICAL_INSIGHT", "ONCHAIN_DATA", "ECONOMIC_DATA", "STRAIGHT_FINANCIAL"];
 

@@ -2,12 +2,20 @@ import React from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, AppBar } from '@mui/material';
 import { ShowChart, Dashboard as DashboardIcon } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { Logout } from '@mui/icons-material';
+// import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 240;
 
 export const Layout = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    // const { logout } = useAuth();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     const menuItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
@@ -48,6 +56,14 @@ export const Layout = () => {
                             </ListItem>
                         ))}
                     </List>
+                </Box>
+                <Box sx={{ mt: 'auto', mb: 2 }}>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={handleLogout} sx={{ borderRadius: '0 24px 24px 0', mr: 2 }}>
+                            <ListItemIcon><Logout /></ListItemIcon>
+                            <ListItemText primary="Logout" />
+                        </ListItemButton>
+                    </ListItem>
                 </Box>
             </Drawer>
             <Box component="main" sx={{ flexGrow: 1, p: 3, bgcolor: 'background.default', minHeight: '100vh' }}>

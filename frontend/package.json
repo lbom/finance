@@ -32,7 +32,7 @@
     "react-router-dom": "^7.12.0",
     "vite": "npm:rolldown-vite@^7.2.5"
   },
-  "overrides": {
-    "vite": "npm:rolldown-vite@7.2.5"
+  "dependencies": {
+    "js-cookie": "^3.0.5"
   }
 }

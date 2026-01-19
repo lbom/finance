@@ -1,16 +1,11 @@
-import axios from 'axios';
-
-const client = axios.create({
-    baseURL: 'http://localhost:8080',
-});
-
-export const fetcher = async ({ queryKey }) => {
-    const [url] = queryKey;
-    const response = await client.get(url);
-    return response.data;
-};
+import client from './axios';
 
 export const api = {
+    auth: {
+        // Matches @RequestBody LoginRequest in Java
+        login: (username, password) => client.post('/auth/login', { username, password }),
+        logout: () => client.post('/auth/logout'),
+    },
     trades: {
         list: () => client.get('/finance/trades').then(r => r.data),
         create: (data) => client.post('/finance/trades', data),

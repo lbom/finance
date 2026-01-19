@@ -6,7 +6,11 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/finance': 'http://localhost:8080'
+      '/finance': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      }
     }
   }
 })
