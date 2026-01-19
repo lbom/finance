@@ -18,7 +18,7 @@ export const Dashboard = () => {
         <Box>
             <Typography variant="h4" gutterBottom>Financial Overview</Typography>
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6}><StatCard title="Total Trade Profit" value={tradeProfit} isLoading={l1} /></Grid>
+                <Grid item xs={12} md={6}><StatCard title="Trade Profits" value={tradeProfit} isLoading={l1} /></Grid>
                 <Grid item xs={12} md={6}><StatCard title="Investment Returns" value={investProfit} isLoading={l2} /></Grid>
             </Grid>
         </Box>

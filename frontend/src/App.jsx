@@ -8,7 +8,8 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Trades } from './pages/Trades';
 import { Login } from './pages/Login';
-import { Investments } from "./pages/Investments";
+import { Investments } from './pages/Investments';
+import { Personal } from './pages/Personal';
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ function App() {
                                 {/* The Layout is rendered only if Auth passes */}
                                 <Route path="/" element={<Layout />}>
                                     <Route index element={<Dashboard />} />
+                                    <Route path="personal" element={<Personal />} />
                                     <Route path="trades" element={<Trades />} />
                                     <Route path="investments" element={<Investments />} />
                                 </Route>

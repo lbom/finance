@@ -18,6 +18,9 @@ export const api = {
     },
     personal: {
         revenue: () => client.get('/finance/personal/revenue').then(r => r.data),
+        createRevenue: (data) => client.post('/finance/personal/revenue', data), // <--- ADD
+
         expenses: () => client.get('/finance/personal/expenses').then(r => r.data),
+        createExpense: (data) => client.post('/finance/personal/expenses', data), // <--- ADD
     },
 };

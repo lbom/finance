@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box, Button, Typography, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, MenuItem, Grid, Chip, Tooltip
+    DialogActions, TextField, MenuItem, Grid, Chip, Tooltip, Paper
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, TrendingUp, TrendingDown, AccessTime, Savings } from '@mui/icons-material';
+import { Add, TrendingUp, TrendingDown, AccessTime, Savings, PieChart } from '@mui/icons-material'; // Added PieChart
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
@@ -70,7 +70,7 @@ export const Investments = () => {
             field: 'startDate',
             headerName: 'Inv. Date',
             width: 120,
-            valueFormatter: (params) => dateFormatter(params)
+            valueFormatter: (value) => dateFormatter(value) // Safe v6 formatter
         },
         {
             field: 'endDate',
@@ -108,7 +108,7 @@ export const Investments = () => {
             type: 'number',
             headerAlign: 'right',
             align: 'right',
-            valueFormatter: (params) => currencyFormatter.format(params)
+            valueFormatter: (value) => currencyFormatter.format(value)
         },
 
         // 4. RETURNS (Highlighted)
@@ -156,19 +156,42 @@ export const Investments = () => {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" mb={3} alignItems="center">
-                <Box>
-                    <Typography variant="h4" fontWeight="bold">Investment Portfolio</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Long-term holdings and asset allocation
-                    </Typography>
-                </Box>
-                <Button variant="contained" startIcon={<Add />} onClick={() => setOpen(true)}>
-                    New Position
-                </Button>
-            </Box>
 
-            <Box sx={{ height: 650, width: '100%', bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, overflow: 'hidden' }}>
+            <Paper
+                elevation={2}
+                sx={{
+                    p: 2,
+                    height: 650,
+                    width: '100%',
+                    borderRadius: 3,
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
+                {/* 1. HEADER ROW */}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <PieChart color="primary" />
+                        <Typography variant="h6" fontWeight="bold">
+                            Active Holdings
+                        </Typography>
+                    </Box>
+
+                    <Button
+                        variant="outlined"
+                        startIcon={<Add />}
+                        onClick={() => setOpen(true)}
+                        sx={{
+                            textTransform: 'none',
+                            fontWeight: 'bold',
+                            borderRadius: 2
+                        }}
+                    >
+                        New Position
+                    </Button>
+                </Box>
+
+                {/* 2. THE GRID */}
                 <DataGrid
                     rows={investments || []}
                     columns={columns}
@@ -193,7 +216,7 @@ export const Investments = () => {
                         }
                     }}
                 />
-            </Box>
+            </Paper>
 
             <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
                 <form onSubmit={handleSubmit(onSubmit)}>
