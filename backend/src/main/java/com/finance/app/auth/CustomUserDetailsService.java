@@ -1,18 +1,20 @@
 package com.finance.app.auth;
 
 import com.finance.app.user.UserRepo;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
-public class AppUserDetailsService implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepo userRepo;
 
-    public AppUserDetailsService(UserRepo userRepo) {
+    public CustomUserDetailsService(UserRepo userRepo) {
         this.userRepo = userRepo;
     }
 
@@ -21,10 +23,15 @@ public class AppUserDetailsService implements UserDetailsService {
         var userEntity = userRepo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return User.builder()
-            .username(userEntity.getUsername())
-            .password(userEntity.getPassword())
-            .roles(userEntity.getRole())
-            .build();
+        var authorities = List.of(
+            new SimpleGrantedAuthority("ROLE_" + userEntity.getRole())
+        );
+
+        return new CustomUserDetails(
+            userEntity.getId(),
+            userEntity.getUsername(),
+            userEntity.getPassword(),
+            authorities
+        );
     }
 }

@@ -1,6 +1,6 @@
 package com.finance.invest.service;
 
-import com.finance.app.user.UserService;
+import com.finance.app.UserInterface;
 import com.finance.invest.persistence.Invest;
 import com.finance.invest.persistence.InvestRepo;
 import lombok.RequiredArgsConstructor;
@@ -14,19 +14,22 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class InvestService {
 
-    private final UserService userService;
-    private final InvestRepo tradeRepo;
+    private final UserInterface userInterface;
+    private final InvestRepo investRepo;
 
-    public List<Invest> getInvests() {
-        return tradeRepo.findAll();
+    public List<Invest> getUserInvests() {
+        var userId = userInterface.retrieveUserId();
+        return investRepo.getInvestsByUserId(userId);
     }
 
-    public void addInvest(Invest trade) {
-        tradeRepo.save(trade);
+    public void addInvest(Invest investment) {
+        var userId = userInterface.retrieveUserId();
+        investment.setUserId(userId);
+        investRepo.save(investment);
     }
 
-    public BigDecimal calcProfit(List<Invest> trades) {
-        return trades.stream()
+    public BigDecimal calcProfit(List<Invest> investments) {
+        return investments.stream()
                 .map(Invest::getProfit)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

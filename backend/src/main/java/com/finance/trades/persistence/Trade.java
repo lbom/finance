@@ -22,6 +22,8 @@ public class Trade {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    private Long userId;
+
     @Column(name = "start_date")
     private LocalDateTime startDate;
 

@@ -35,7 +35,7 @@ public class AuthController {
 
             var authentication = authManager.authenticate(token);
             var context = SecurityContextHolder.createEmptyContext();
-
+            
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
             securityContextRepository.saveContext(context, request, response);

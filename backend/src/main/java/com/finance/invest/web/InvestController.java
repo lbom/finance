@@ -17,7 +17,7 @@ public class InvestController {
 
     @GetMapping
     public List<InvestDto> getList() {
-        var invests = investService.getInvests();
+        var invests = investService.getUserInvests();
         return investMapper.toDto(invests);
     }
 
@@ -29,7 +29,7 @@ public class InvestController {
 
     @GetMapping("/profit")
     public BigDecimal getProfit() {
-        var invests = investService.getInvests();
+        var invests = investService.getUserInvests();
         return investService.calcProfit(invests);
     }
 }

@@ -23,6 +23,9 @@ public class Invest {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(name = "amount", precision = 19, scale = 4)
     private BigDecimal amount;
 
