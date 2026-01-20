@@ -18,7 +18,7 @@ export const Layout = () => {
 
     const menuItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-        { text: 'Personal', icon: <Wallet />, path: '/personal' },
+        { text: 'Cash Flow', icon: <Wallet />, path: '/personal' },
         { text: 'Trades', icon: <ShowChart />, path: '/trades' },
         { text: 'Investments', icon: <PieChart />, path: '/investments' },
     ];

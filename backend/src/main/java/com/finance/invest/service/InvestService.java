@@ -1,5 +1,6 @@
 package com.finance.invest.service;
 
+import com.finance.app.user.UserService;
 import com.finance.invest.persistence.Invest;
 import com.finance.invest.persistence.InvestRepo;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class InvestService {
 
+    private final UserService userService;
     private final InvestRepo tradeRepo;
 
     public List<Invest> getInvests() {

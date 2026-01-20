@@ -1,0 +1,9 @@
+package com.finance.app.user;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface UserRepo extends JpaRepository<UserApp, Long> {
+    Optional<UserApp> findByUsername(String username);
+}

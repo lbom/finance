@@ -1,5 +1,6 @@
 package com.finance.trades.service;
 
+import com.finance.app.user.UserService;
 import com.finance.trades.persistence.Trade;
 import com.finance.trades.persistence.TradeRepo;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class TradeService {
 
+    private final UserService userService;
     private final TradeRepo tradeRepo;
 
     public List<Trade> getTrades() {
