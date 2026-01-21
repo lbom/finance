@@ -20,8 +20,8 @@ public class PersonalTransaction {
     private Long userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "transaction_type", length = Integer.MAX_VALUE)
-    private PersonalTransactionType transactionType;
+    @Column(name = "type", length = Integer.MAX_VALUE)
+    private PersonalTransactionType type;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "spending_type", length = Integer.MAX_VALUE)

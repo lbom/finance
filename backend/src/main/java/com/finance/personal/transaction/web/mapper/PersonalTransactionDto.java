@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 public record PersonalTransactionDto(
     Long id,
-    PersonalTransactionType transactionType,
+    PersonalTransactionType type,
     PersonalSpendingType spendingType,
     PersonalProfitType profitType,
     BigDecimal amount

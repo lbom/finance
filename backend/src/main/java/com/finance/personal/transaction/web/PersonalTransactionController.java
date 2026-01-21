@@ -1,5 +1,6 @@
 package com.finance.personal.transaction.web;
 
+import com.finance.app.UserInterface;
 import com.finance.personal.transaction.persistence.PersonalTransactionType;
 import com.finance.personal.transaction.service.PersonalTransactionService;
 import com.finance.personal.transaction.web.mapper.PersonalTransactionDto;
@@ -15,16 +16,21 @@ public class PersonalTransactionController {
 
     private final PersonalTransactionService service;
     private final PersonalTransactionMapper mapper;
+    private final UserInterface userInterface;
 
     @GetMapping
     public List<PersonalTransactionDto> getTransactionsListByType(
         @RequestParam PersonalTransactionType type
     ) {
-        return mapper.toDto(service.getTransactionsByType(type));
+        var transactions = service.getTransactionsByType(type);
+        return mapper.toDto(transactions);
     }
 
     @PostMapping
     public void add(@RequestBody PersonalTransactionDto dto) {
-        service.save(mapper.toEntity(dto));
+        var transaction = mapper.toEntity(dto);
+        var userId = userInterface.retrieveUserId();
+        transaction.setUserId(userId);
+        service.save(transaction);
     }
 }

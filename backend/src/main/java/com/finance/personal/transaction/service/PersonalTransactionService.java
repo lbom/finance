@@ -18,7 +18,11 @@ public class PersonalTransactionService {
 
     public List<PersonalTransaction> getTransactionsByType(PersonalTransactionType type) {
         var userId = userInterface.retrieveUserId();
-        return repository.getPersonalTransactionByUserIdAndTransactionType(userId, type);
+        return repository.getPersonalTransactionByUserIdAndType(userId, type);
     }
-    public void save(PersonalTransaction transaction) { repository.save(transaction); }
+    public void save(PersonalTransaction transaction) {
+        var userId = userInterface.retrieveUserId();
+        transaction.setUserId(userId);
+        repository.save(transaction);
+    }
 }

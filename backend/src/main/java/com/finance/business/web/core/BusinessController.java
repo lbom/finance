@@ -10,6 +10,7 @@ import java.util.List;
 @RequestMapping("/finance/business")
 @RequiredArgsConstructor
 public class BusinessController {
+
     private final BusinessService service;
     private final BusinessMapper mapper;
 

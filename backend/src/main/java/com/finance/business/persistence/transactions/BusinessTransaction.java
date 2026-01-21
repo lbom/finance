@@ -1,6 +1,5 @@
 package com.finance.business.persistence.transactions;
 
-import com.finance.business.web.transactions.BusinessTransactionType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +16,9 @@ public class BusinessTransaction {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(name = "name", length = Integer.MAX_VALUE)
     private String name;
 
@@ -24,7 +26,6 @@ public class BusinessTransaction {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "type")
     private BusinessTransactionType type;
-
-
 }

@@ -1,6 +1,6 @@
 package com.finance.business.service;
 
-import com.finance.app.user.UserService;
+import com.finance.app.UserInterface;
 import com.finance.business.persistence.core.Business;
 import com.finance.business.persistence.core.BusinessRepo;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +11,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BusinessService {
 
-    private final UserService userService;
+    private final UserInterface userInterface;
     private final BusinessRepo repository;
 
     public List<Business> getAll() {
-        return repository.findAll();
+        var userId = userInterface.retrieveUserId();
+        return repository.findBusinessByUserId(userId);
     }
-    public void save(Business business) { repository.save(business); }
+    public void save(Business business) {
+        var userId = userInterface.retrieveUserId();
+        business.setUserId(userId);
+        repository.save(business);
+    }
 }

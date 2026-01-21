@@ -16,6 +16,9 @@ public class Business {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(name = "name", length = Integer.MAX_VALUE)
     private String name;
 
@@ -23,10 +26,9 @@ public class Business {
     private String idea;
 
     @Column(name = "expense", precision = 10, scale = 2)
-    private BigDecimal overallExpense;
+    private BigDecimal expense;
 
     @Column(name = "revenue", precision = 10, scale = 2)
-    private BigDecimal overallRevenue;
-
+    private BigDecimal revenue;
 
 }
