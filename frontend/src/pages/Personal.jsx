@@ -9,8 +9,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
-const RevenueTypes = ["SALARY", "DIVIDENDS", "FREELANCE", "GIFT", "OTHER"];
-const ExpenseTypes = ["FOOD", "RENT", "TRANSPORT", "ENTERTAINMENT", "HEALTH", "TAXES"];
+const ProfitTypes = ["SALARY", "BUSINESS", "INVESTMENT", "TRADE", "GIFT", "OTHER"];
+const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "OTHER"];
 
 // Safe Currency Formatter
 const formatMoney = (val) => {
@@ -30,12 +30,12 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type }) => {
 
     const rows = (data || []).map(item => ({
         ...item,
-        type: item.expenseType || item.revenueType || item.type || 'UNKNOWN'
+        displayCategory: item.profitType || item.spendingType || 'OTHER'
     }));
 
     const columns = [
         {
-            field: 'type',
+            field: 'displayCategory',
             headerName: 'Category',
             flex: 1,
             renderCell: (params) => (
@@ -46,7 +46,6 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type }) => {
                         bgcolor: chipBg,
                         color: chipText,
                         fontWeight: 600,
-                        border: 'none',
                         fontSize: '0.75rem',
                         textTransform: 'capitalize'
                     }}
@@ -118,47 +117,53 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type }) => {
 export const Personal = () => {
     const queryClient = useQueryClient();
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [activeSection, setActiveSection] = useState(null); // 'REVENUE' or 'EXPENSE'
+    const [activeSection, setActiveSection] = useState(null); // 'PROFIT' or 'SPENDING'
 
-    const { data: revenues, isLoading: l1 } = useQuery({ queryKey: ['revenue'], queryFn: api.personal.revenue });
-    const { data: expenses, isLoading: l2 } = useQuery({ queryKey: ['expenses'], queryFn: api.personal.expenses });
-
-    const addRevenue = useMutation({
-        mutationFn: api.personal.createRevenue,
-        onSuccess: () => { queryClient.invalidateQueries(['revenue']); handleClose(); }
+    // Unified Querying
+    const { data: profits, isLoading: l1 } = useQuery({
+        queryKey: ['personal', 'PROFIT'],
+        queryFn: () => api.personal.list('PROFIT')
+    });
+    const { data: spendings, isLoading: l2 } = useQuery({
+        queryKey: ['personal', 'SPENDING'],
+        queryFn: () => api.personal.list('SPENDING')
     });
 
-    const addExpense = useMutation({
-        mutationFn: api.personal.createExpense,
-        onSuccess: () => { queryClient.invalidateQueries(['expenses']); handleClose(); }
+    const addTransaction = useMutation({
+        mutationFn: api.personal.create,
+        onSuccess: (_, variables) => {
+            // Invalidate specifically the type we just added
+            queryClient.invalidateQueries(['personal', variables.type]);
+            handleClose();
+        }
     });
 
     const { control, handleSubmit, reset } = useForm({
-        defaultValues: { type: '', amount: '' }
+        defaultValues: { category: '', amount: '' }
     });
 
     const handleOpen = (section) => {
         setActiveSection(section);
-        reset({ type: section === 'REVENUE' ? RevenueTypes[0] : ExpenseTypes[0], amount: '' });
+        reset({ category: section === 'PROFIT' ? ProfitTypes[0] : SpendingTypes[0], amount: '' });
         setDialogOpen(true);
     };
 
     const handleClose = () => setDialogOpen(false);
 
     const onSubmit = (data) => {
-        const payload = { amount: Number(data.amount) };
-        if (activeSection === 'REVENUE') {
-            payload.revenueType = data.type;
-            addRevenue.mutate(payload);
-        } else {
-            payload.expenseType = data.type;
-            addExpense.mutate(payload);
-        }
+        // Construct payload to match PersonalTransactionDto
+        const payload = {
+            type: activeSection,
+            amount: Number(data.amount),
+            // Map the selection to the correct DTO field
+            profitType: activeSection === 'PROFIT' ? data.category : null,
+            spendingType: activeSection === 'SPENDING' ? data.category : null
+        };
+        addTransaction.mutate(payload);
     };
 
     return (
         <Box sx={{ pb: 5 }}>
-            {/* Page Header */}
             <Box mb={4}>
                 <Typography variant="h4" gutterBottom>Cash Flow</Typography>
                 <Typography variant="body1" color="text.secondary">
@@ -167,48 +172,45 @@ export const Personal = () => {
             </Box>
 
             <Grid container spacing={3}>
-                {/* Income Column */}
                 <Grid item xs={12} md={6}>
                     <FinanceSection
                         title="Income Streams"
-                        subtitle="Salary, Dividends, etc."
-                        type="income"
-                        data={revenues}
+                        subtitle="Salary, Business, etc."
+                        type="income" // UI styling prop
+                        data={profits}
                         isLoading={l1}
-                        onAdd={() => handleOpen('REVENUE')}
+                        onAdd={() => handleOpen('PROFIT')}
                     />
                 </Grid>
 
-                {/* Expense Column */}
                 <Grid item xs={12} md={6}>
                     <FinanceSection
                         title="Expenses"
                         subtitle="Rent, Food, Lifestyle"
-                        type="expense"
-                        data={expenses}
+                        type="expense" // UI styling prop
+                        data={spendings}
                         isLoading={l2}
-                        onAdd={() => handleOpen('EXPENSE')}
+                        onAdd={() => handleOpen('SPENDING')}
                     />
                 </Grid>
             </Grid>
 
-            {/* Shared Dialog */}
             <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <DialogTitle>
                         <Typography variant="h6" fontWeight="bold">
-                            {activeSection === 'REVENUE' ? 'Add Income' : 'Log Expense'}
+                            {activeSection === 'PROFIT' ? 'Add Income' : 'Log Expense'}
                         </Typography>
                     </DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
                             <Controller
-                                name="type"
+                                name="category"
                                 control={control}
                                 rules={{ required: true }}
                                 render={({ field }) => (
                                     <TextField {...field} select label="Category" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
-                                        {(activeSection === 'REVENUE' ? RevenueTypes : ExpenseTypes).map(opt => (
+                                        {(activeSection === 'PROFIT' ? ProfitTypes : SpendingTypes).map(opt => (
                                             <MenuItem key={opt} value={opt}>{opt.replace(/_/g, ' ')}</MenuItem>
                                         ))}
                                     </TextField>
@@ -238,10 +240,11 @@ export const Personal = () => {
                         <Button
                             type="submit"
                             variant="contained"
-                            color={activeSection === 'REVENUE' ? "success" : "error"}
+                            disabled={addTransaction.isLoading}
+                            color={activeSection === 'PROFIT' ? "success" : "error"}
                             sx={{ borderRadius: 2, px: 3 }}
                         >
-                            Save
+                            {addTransaction.isLoading ? 'Saving...' : 'Save'}
                         </Button>
                     </DialogActions>
                 </form>

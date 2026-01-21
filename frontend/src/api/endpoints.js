@@ -17,10 +17,7 @@ export const api = {
         profit: () => client.get('/finance/invest/profit').then(r => r.data),
     },
     personal: {
-        revenue: () => client.get('/finance/personal/revenue').then(r => r.data),
-        createRevenue: (data) => client.post('/finance/personal/revenue', data), // <--- ADD
-
-        expenses: () => client.get('/finance/personal/expenses').then(r => r.data),
-        createExpense: (data) => client.post('/finance/personal/expenses', data), // <--- ADD
+        list: (type) => client.get(`/finance/personal/transaction?type=${type}`).then(r => r.data),
+        create: (data) => client.post('/finance/personal/transaction', data),
     },
 };
