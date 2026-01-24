@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -23,8 +22,8 @@ public class Invest {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Column(name = "person_id", nullable = false)
+    private Long personId;
 
     @Column(name = "amount", precision = 19, scale = 4)
     private BigDecimal amount;

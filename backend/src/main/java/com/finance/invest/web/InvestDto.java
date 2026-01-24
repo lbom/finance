@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public record InvestDto(
     Long id,
+    Long personId,
     BigDecimal amount,
     LocalDateTime endDate,
     String reason,

@@ -16,8 +16,8 @@ public class InvestController {
     private final InvestMapper investMapper;
 
     @GetMapping
-    public List<InvestDto> getList() {
-        var invests = investService.getUserInvests();
+    public List<InvestDto> getList(@RequestParam Long personId) {
+        var invests = investService.getPersonInvests(personId);
         return investMapper.toDto(invests);
     }
 
@@ -28,8 +28,8 @@ public class InvestController {
     }
 
     @GetMapping("/profit")
-    public BigDecimal getProfit() {
-        var invests = investService.getUserInvests();
+    public BigDecimal getProfit(@RequestParam Long personId) {
+        var invests = investService.getPersonInvests(personId);
         return investService.calcProfit(invests);
     }
 }

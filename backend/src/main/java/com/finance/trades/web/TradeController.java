@@ -16,8 +16,8 @@ public class TradeController {
     private final TradeMapper tradeMapper;
 
     @GetMapping
-    public List<TradeDto> getList() {
-        var trades = tradeService.getTrades();
+    public List<TradeDto> getList(@RequestParam Long personId) {
+        var trades = tradeService.getTrades(personId);
         return tradeMapper.toDto(trades);
     }
 
@@ -28,8 +28,8 @@ public class TradeController {
     }
 
     @GetMapping("/profit")
-    public BigDecimal getProfit() {
-        var trades = tradeService.getTrades();
+    public BigDecimal getProfit(@RequestParam Long personId) {
+        var trades = tradeService.getTrades(personId);
         return tradeService.calcProfit(trades);
     }
 }

@@ -7,6 +7,6 @@ import java.util.List;
 
 @Repository
 public interface TradeRepo extends JpaRepository<Trade, Long> {
-    List<Trade> getTradesByUserId(Long userId);
+    List<Trade> getTradesByPersonId(Long personId);
 
 }

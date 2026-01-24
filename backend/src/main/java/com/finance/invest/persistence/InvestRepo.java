@@ -7,5 +7,5 @@ import java.util.List;
 
 @Repository
 public interface InvestRepo extends JpaRepository<Invest, Long> {
-    List<Invest> getInvestsByUserId(Long userId);
+    List<Invest> getInvestsByPersonId(Long userId);
 }
