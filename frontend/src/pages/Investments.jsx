@@ -28,15 +28,19 @@ export const Investments = () => {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
 
+    const { data: persons, isLoading: personsLoading } = useQuery({ queryKey: ['persons'], queryFn: api.person.list });
+    const activePersonId = persons?.[0]?.id;
+
     const { data: investments, isLoading } = useQuery({
-        queryKey: ['investments'],
-        queryFn: api.invest.list
+        queryKey: ['investments', activePersonId],
+        queryFn: () => api.invest.list(activePersonId),
+        enabled: !!activePersonId
     });
 
     const mutation = useMutation({
-        mutationFn: api.invest.create,
+        mutationFn: (data) => api.invest.create(activePersonId, data),
         onSuccess: () => {
-            queryClient.invalidateQueries(['investments']);
+            queryClient.invalidateQueries(['investments', activePersonId]);
             setOpen(false);
             reset();
         },
@@ -51,8 +55,10 @@ export const Investments = () => {
     });
 
     const onSubmit = (data) => {
+        if (!activePersonId) return;
         const payload = {
             ...data,
+            personId: activePersonId,
             startDate: new Date(data.startDate).toISOString(),
             endDate: data.endDate ? new Date(data.endDate).toISOString() : null
         };
@@ -71,7 +77,13 @@ export const Investments = () => {
             headerName: 'Maturity',
             width: 130,
             renderCell: (params) => (
-                <Typography variant="body2" color={params.value ? 'text.secondary' : 'primary.main'} fontWeight={params.value ? 400 : 600} fontSize="0.85rem">
+                <Typography
+                    variant="body2"
+                    color={params.value ? 'text.secondary' : 'primary.main'}
+                    fontWeight={params.value ? 400 : 600}
+                    fontSize="0.85rem"
+                    sx={{ display: 'flex', alignItems: 'center', height: '100%' }}
+                >
                     {params.value ? dateFormatter(params.value) : 'Perpetual'}
                 </Typography>
             )
@@ -126,7 +138,7 @@ export const Investments = () => {
                 }
                 const isProfit = value >= 0;
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'primary.main' : 'error.main' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'primary.main' : 'error.main', height: '100%' }}>
                         {isProfit ? <TrendingUp fontSize="small" /> : <TrendingDown fontSize="small" />}
                         <Typography fontWeight="bold" fontSize="0.9rem">
                             {formatMoney(value)}
@@ -162,7 +174,7 @@ export const Investments = () => {
                         <Box>
                             <Typography variant="h6">Active Holdings</Typography>
                             <Typography variant="caption" color="text.secondary">
-                                {investments?.length || 0} Positions managed
+                                {personsLoading ? 'Loading person…' : `${investments?.length || 0} Positions managed`}
                             </Typography>
                         </Box>
                     </Box>
@@ -170,6 +182,7 @@ export const Investments = () => {
                         variant="contained"
                         startIcon={<Add />}
                         onClick={() => setOpen(true)}
+                        disabled={!activePersonId}
                         sx={{ borderRadius: 3, px: 3 }}
                     >
                         New Position
@@ -181,7 +194,7 @@ export const Investments = () => {
                     <DataGrid
                         rows={investments || []}
                         columns={columns}
-                        loading={isLoading}
+                        loading={isLoading || personsLoading}
                         disableRowSelectionOnClick
                         rowHeight={60} // Taller rows for modern feel
                         initialState={{
@@ -191,6 +204,7 @@ export const Investments = () => {
                         pageSizeOptions={[10, 25]}
                         sx={{
                             border: 'none',
+                            '& .MuiDataGrid-cell': { alignItems: 'center' },
                             // Remove column separators
                             '& .MuiDataGrid-columnSeparator': { display: 'none' },
                         }}

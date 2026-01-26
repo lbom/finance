@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, Avatar } from '@mui/material';
-import { Wallet, PieChart, ShowChart, Dashboard as DashboardIcon, Logout, AccountBalanceWallet } from '@mui/icons-material';
+import { Wallet, PieChart, ShowChart, Dashboard as DashboardIcon, Logout, AccountBalanceWallet, MenuBook } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Ensure this path is correct
 
@@ -21,6 +21,7 @@ export const Layout = () => {
         { text: 'Cash Flow', icon: <Wallet />, path: '/personal' },
         { text: 'Trades', icon: <ShowChart />, path: '/trades' },
         { text: 'Investments', icon: <PieChart />, path: '/investments' },
+        { text: 'Dictionaries', icon: <MenuBook />, path: '/dictionaries' },
     ];
 
     return (
@@ -49,10 +50,10 @@ export const Layout = () => {
                     </Avatar>
                     <Box>
                         <Typography variant="h6" fontWeight="800" color="primary.main" lineHeight={1.2}>
-                            Green Money
+                            Finance
                         </Typography>
                         <Typography variant="caption" color="text.secondary" fontWeight="500">
-                            Tracker
+                            Money Tracker
                         </Typography>
                     </Box>
                 </Box>

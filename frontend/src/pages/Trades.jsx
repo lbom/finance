@@ -28,12 +28,19 @@ export const Trades = () => {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
 
-    const { data: trades, isLoading } = useQuery({ queryKey: ['trades'], queryFn: api.trades.list });
+    const { data: persons, isLoading: personsLoading } = useQuery({ queryKey: ['persons'], queryFn: api.person.list });
+    const activePersonId = persons?.[0]?.id;
+
+    const { data: trades, isLoading } = useQuery({
+        queryKey: ['trades', activePersonId],
+        queryFn: () => api.trades.list(activePersonId),
+        enabled: !!activePersonId,
+    });
 
     const mutation = useMutation({
-        mutationFn: api.trades.create,
+        mutationFn: (data) => api.trades.create(activePersonId, data),
         onSuccess: () => {
-            queryClient.invalidateQueries(['trades']);
+            queryClient.invalidateQueries(['trades', activePersonId]);
             setOpen(false);
             reset();
         },
@@ -46,7 +53,10 @@ export const Trades = () => {
         }
     });
 
-    const onSubmit = (data) => mutation.mutate(data);
+    const onSubmit = (data) => {
+        if (!activePersonId) return;
+        mutation.mutate({ ...data, personId: activePersonId });
+    };
 
     const columns = [
         {
@@ -103,7 +113,7 @@ export const Trades = () => {
                 }
                 const isProfit = value >= 0;
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'primary.main' : 'error.main' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'primary.main' : 'error.main', height: '100%' }}>
                         {isProfit ? <TrendingUp fontSize="small" /> : <TrendingDown fontSize="small" />}
                         <Typography fontWeight="bold" fontSize="0.9rem">
                             {formatMoney(value)}
@@ -140,7 +150,7 @@ export const Trades = () => {
                         <Box>
                             <Typography variant="h6">Recent Trades</Typography>
                             <Typography variant="caption" color="text.secondary">
-                                {trades?.length || 0} Entries logged
+                                {personsLoading ? 'Loading person…' : `${trades?.length || 0} Entries logged`}
                             </Typography>
                         </Box>
                     </Box>
@@ -149,6 +159,7 @@ export const Trades = () => {
                         variant="contained"
                         startIcon={<Add />}
                         onClick={() => setOpen(true)}
+                        disabled={!activePersonId}
                         sx={{ borderRadius: 3, px: 3 }}
                     >
                         Log Trade
@@ -160,7 +171,7 @@ export const Trades = () => {
                     <DataGrid
                         rows={trades || []}
                         columns={columns}
-                        loading={isLoading}
+                        loading={isLoading || personsLoading}
                         disableRowSelectionOnClick
                         rowHeight={60}
                         initialState={{
@@ -170,6 +181,7 @@ export const Trades = () => {
                         pageSizeOptions={[10, 25, 50]}
                         sx={{
                             border: 'none',
+                            '& .MuiDataGrid-cell': { alignItems: 'center' },
                             '& .MuiDataGrid-columnSeparator': { display: 'none' },
                         }}
                     />

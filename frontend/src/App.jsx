@@ -10,6 +10,7 @@ import { Trades } from './pages/Trades';
 import { Login } from './pages/Login';
 import { Investments } from './pages/Investments';
 import { Personal } from './pages/Personal';
+import { Dictionaries } from './pages/Dictionaries';
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ function App() {
                                     <Route path="personal" element={<Personal />} />
                                     <Route path="trades" element={<Trades />} />
                                     <Route path="investments" element={<Investments />} />
+                                    <Route path="dictionaries" element={<Dictionaries />} />
                                 </Route>
                             </Route>
 

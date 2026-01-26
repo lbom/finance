@@ -4,20 +4,47 @@ export const api = {
     auth: {
         // Matches @RequestBody LoginRequest in Java
         login: (username, password) => client.post('/auth/login', { username, password }),
-        logout: () => client.post('/auth/logout'),
+        logout: () => client.post('/logout'),
     },
     trades: {
-        list: () => client.get('/finance/trades').then(r => r.data),
-        create: (data) => client.post('/finance/trades', data),
-        profit: () => client.get('/finance/trades/profit').then(r => r.data),
+        list: (personId) => client.get('/finance/personal/trades', { params: { personId } }).then(r => r.data),
+        create: (personId, data) => client.post('/finance/personal/trades', data, { params: { personId } }),
+        profit: (personId) => client.get('/finance/personal/trades/profit', { params: { personId } }).then(r => r.data),
     },
     invest: {
-        list: () => client.get('/finance/invest').then(r => r.data),
-        create: (data) => client.post('/finance/invest', data),
-        profit: () => client.get('/finance/invest/profit').then(r => r.data),
+        list: (personId) => client.get('/finance/personal/invest', { params: { personId } }).then(r => r.data),
+        create: (personId, data) => client.post('/finance/personal/invest', data, { params: { personId } }),
+        profit: (personId) => client.get('/finance/personal/invest/profit', { params: { personId } }).then(r => r.data),
     },
     personal: {
-        list: (type) => client.get(`/finance/personal/transaction?type=${type}`).then(r => r.data),
-        create: (data) => client.post('/finance/personal/transaction', data),
+        list: (personId, type) => client.get('/finance/personal/transaction', { params: { personId, type } }).then(r => r.data),
+        create: (personId, data) => client.post('/finance/personal/transaction', data, { params: { personId } }),
+    },
+    recurrent: {
+        list: (personId) => client.get('/finance/personal/transaction/recurrent', { params: { personId } }).then(r => r.data),
+        create: (personId, data) => client.post('/finance/personal/transaction/recurrent', data, { params: { personId } }),
+        update: (personId, data) => client.put('/finance/personal/transaction/recurrent', data, { params: { personId } }),
+    },
+    person: {
+        list: () => client.get('/finance/personal/person').then(r => r.data),
+        create: (data) => client.post('/finance/personal/person', data),
+    },
+    balance: {
+        list: (personId) => client.get('/finance/personal/balance', { params: { personId } }).then(r => r.data),
+        create: (personId, data) => client.post('/finance/personal/balance', data, { params: { personId } }),
+    },
+    dictionary: {
+        currency: {
+            list: () => client.get('/finance/dictionary/currency').then(r => r.data),
+            create: (data) => client.post('/finance/dictionary/currency', data),
+        },
+        institution: {
+            list: () => client.get('/finance/dictionary/institution').then(r => r.data),
+            create: (data) => client.post('/finance/dictionary/institution', data),
+        },
+        symbol: {
+            list: () => client.get('/finance/dictionary/symbol').then(r => r.data),
+            create: (data) => client.post('/finance/dictionary/symbol', data),
+        },
     },
 };
