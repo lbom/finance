@@ -14,6 +14,6 @@ public record InvestDto(
     BigDecimal profit,
     @Nonnull LocalDateTime startDate,
     InvestType type,
-    Integer symbolId,
-    Integer institutionId
+    @Nonnull Integer symbolId,
+    @Nonnull Integer institutionId
 ) {}

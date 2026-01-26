@@ -17,6 +17,7 @@ public class Symbol {
     @Column(name = "symbol", length = Integer.MAX_VALUE)
     private String symbol;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "\"group\"", length = Integer.MAX_VALUE)
-    private String group;
+    private SymbolGroup group;
 }

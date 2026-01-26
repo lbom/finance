@@ -20,5 +20,4 @@ public class Institution {
     @Column(name = "country", length = Integer.MAX_VALUE)
     private String country;
 
-
 }

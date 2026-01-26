@@ -10,9 +10,6 @@ public class Currency {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "type", nullable = false)
-    private String type;
-
     @Column(name = "symbol")
     private String symbol;
 
