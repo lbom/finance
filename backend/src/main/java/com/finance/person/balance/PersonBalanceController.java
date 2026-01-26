@@ -2,6 +2,7 @@ package com.finance.person.balance;
 
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class PersonBalanceController {
     @PostMapping
     public void add(
         @PathVariable @RequestParam Long personId,
-        @RequestBody PersonBalanceDto dto)
+        @Validated @RequestBody PersonBalanceDto dto)
     {
         userModule.hasAuthority(personId);
         var balance = mapper.toEntity(dto);

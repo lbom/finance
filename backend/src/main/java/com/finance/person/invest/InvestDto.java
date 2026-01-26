@@ -1,17 +1,19 @@
 package com.finance.person.invest;
 
+import jakarta.annotation.Nonnull;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record InvestDto(
     Long id,
-    Long personId,
-    BigDecimal amount,
+    @Nonnull Long personId,
+    @Nonnull BigDecimal amount,
     LocalDateTime endDate,
-    String reason,
+    @Nonnull String reason,
     BigDecimal profit,
-    LocalDateTime startDate,
-    String type,
+    @Nonnull LocalDateTime startDate,
+    InvestType type,
     Integer symbolId,
     Integer institutionId
 ) {}

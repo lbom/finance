@@ -1,10 +1,12 @@
 package com.finance.person.balance;
 
+import jakarta.annotation.Nonnull;
+
 import java.math.BigDecimal;
 
 public record PersonBalanceDto(
     Long id,
-    Long personId,
-    Long currencyId,
-    BigDecimal amount
+    @Nonnull Long personId,
+    @Nonnull Long currencyId,
+    @Nonnull BigDecimal amount
 ) {}

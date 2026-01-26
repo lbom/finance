@@ -22,7 +22,7 @@ public class PersonTransactionRecurrentService {
     private final TransactionTemplate transactionTemplate;
 
     public PersonTransactionRecurrentService(
-        UserModule userModule, PlatformTransactionManager transactionManager,
+        PlatformTransactionManager transactionManager,
         PersonBalanceService personBalanceService,
         PersonTransactionService personTransactionService,
         PersonTransactionRecurrentRepo personTransactionRecurrentRepo

@@ -19,6 +19,9 @@ public class PersonTransaction {
     @Column(name = "person_id", nullable = false)
     private Long personId;
 
+    @Column(name = "balance_id", nullable = false)
+    private Long balanceId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = Integer.MAX_VALUE)
     private PersonTransactionType type;

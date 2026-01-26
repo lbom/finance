@@ -2,6 +2,7 @@ package com.finance.person.invest;
 
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -26,7 +27,7 @@ public class InvestController {
     @PostMapping
     public void addInvest(
         @PathVariable @RequestParam Long personId,
-        @RequestBody InvestDto investDto
+        @Validated @RequestBody InvestDto investDto
     ) {
         userModule.hasAuthority(personId);
         var invest = investMapper.toEntity(investDto);

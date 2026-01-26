@@ -1,6 +1,6 @@
 package com.finance.person.transaction;
 
-import com.finance.app.UserModule;
+import com.finance.person.balance.PersonBalanceService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +13,7 @@ import java.util.List;
 public class PersonTransactionService {
 
     private final PersonTransactionRepo repository;
+    private final PersonBalanceService personBalanceService;
 
     public List<PersonTransaction> getTransactionsByType(
         Long personId,
@@ -21,8 +22,14 @@ public class PersonTransactionService {
         return repository.getPersonalTransactionByPersonIdAndType(personId, type);
     }
 
+    @Transactional
     public void save(PersonTransaction transaction) {
         repository.save(transaction);
+        personBalanceService.update(
+            transaction.getBalanceId(),
+            transaction.getAmount(),
+            transaction.getType() == PersonTransactionType.SPENDING
+        );
     }
 
     @Transactional

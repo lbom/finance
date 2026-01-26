@@ -2,6 +2,7 @@ package com.finance.person.transaction.reccurent;
 
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class PersonTransactionRecurrentController {
     @PostMapping
     public void add(
         @PathVariable @RequestParam Long personId,
-        @RequestBody PersonTransactionRecurrentDto dto
+        @Validated @RequestBody PersonTransactionRecurrentDto dto
     ) {
         userModule.hasAuthority(personId);
         var transaction = mapper.toEntity(dto);
@@ -37,7 +38,7 @@ public class PersonTransactionRecurrentController {
     @PutMapping
     public void update(
         @PathVariable @RequestParam Long personId,
-        @RequestBody PersonTransactionRecurrentDto dto
+        @Validated @RequestBody PersonTransactionRecurrentDto dto
     ) {
         userModule.hasAuthority(personId);
         var transaction = mapper.toEntity(dto);

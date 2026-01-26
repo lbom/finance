@@ -2,6 +2,7 @@ package com.finance.person.trade;
 
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ public class TradeController {
     @PostMapping
     public void addTrade(
         @PathVariable @RequestParam Long personId,
-        @RequestBody TradeDto tradeDto
+        @Validated @RequestBody TradeDto tradeDto
     ) {
         userModule.hasAuthority(personId);
         var trades = tradeMapper.toEntity(tradeDto);
