@@ -2,8 +2,9 @@ package com.finance.app;
 
 import com.finance.app.auth.CustomUserDetails;
 import com.finance.app.error.CustomAuthorityException;
-import com.finance.person.PersonModule;
-import com.finance.person.PersonDto;
+import com.finance.personal.PersonModuleDto;
+import com.finance.personal.PersonalModule;
+import com.finance.personal.person.PersonDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserModuleImpl implements UserModule {
 
-    private final PersonModule personModule;
+    private final PersonalModule personalModule;
 
     public Long retrieveUserId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -29,8 +30,8 @@ public class UserModuleImpl implements UserModule {
         if (personId == null) throw new CustomAuthorityException();
         var userId = retrieveUserId();
         if (userId == null) throw new CustomAuthorityException();
-        var persons = personModule.getPersonsByUserId(userId);
-        if (!persons.stream().map(PersonDto::id).toList().contains(personId)) {
+        var persons = personalModule.getPersonsByUserId(userId);
+        if (!persons.stream().map(PersonModuleDto::id).toList().contains(personId)) {
             throw new CustomAuthorityException();
         };
     }

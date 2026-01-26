@@ -1,7 +1,7 @@
 package com.finance.app.auth;
 
 import com.finance.app.UserModule;
-import com.finance.person.PersonModule;
+import com.finance.personal.PersonalModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SecurityService {
 
-    private final PersonModule personModule;
+    private final PersonalModule personalModule;
     private final UserModule userModule;
 
     public boolean hasPersonAuthority(Long personId) {
         if (personId == null) return false;
         var userId = userModule.retrieveUserId();
         if (userId == null) return false;
-        return personModule.getPersonsByUserId(userId).stream()
+        return personalModule.getPersonsByUserId(userId).stream()
                 .anyMatch(p -> p.id().equals(personId));
     }
 }
