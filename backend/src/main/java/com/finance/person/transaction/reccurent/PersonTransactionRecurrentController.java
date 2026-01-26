@@ -1,5 +1,6 @@
 package com.finance.person.transaction.reccurent;
 
+import com.finance.app.CheckPersonAuthority;
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/finance/person/transaction/recurrent/{personId}")
+@RequestMapping("/finance/person/transaction/recurrent")
 @RequiredArgsConstructor
 public class PersonTransactionRecurrentController {
 
@@ -17,8 +18,9 @@ public class PersonTransactionRecurrentController {
     private final UserModule userModule;
 
     @GetMapping
+    @CheckPersonAuthority
     public List<PersonTransactionRecurrentDto> getTransactionsListByType(
-        @PathVariable @RequestParam Long personId
+        @RequestParam Long personId
     ) {
         userModule.hasAuthority(personId);
         var transactions = service.getTransactionsByPersonId(personId);
@@ -26,8 +28,9 @@ public class PersonTransactionRecurrentController {
     }
 
     @PostMapping
+    @CheckPersonAuthority
     public void add(
-        @PathVariable @RequestParam Long personId,
+        @RequestParam Long personId,
         @Validated @RequestBody PersonTransactionRecurrentDto dto
     ) {
         userModule.hasAuthority(personId);
@@ -36,8 +39,9 @@ public class PersonTransactionRecurrentController {
     }
 
     @PutMapping
+    @CheckPersonAuthority
     public void update(
-        @PathVariable @RequestParam Long personId,
+        @RequestParam Long personId,
         @Validated @RequestBody PersonTransactionRecurrentDto dto
     ) {
         userModule.hasAuthority(personId);

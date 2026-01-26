@@ -1,5 +1,6 @@
 package com.finance.person.transaction;
 
+import com.finance.app.CheckPersonAuthority;
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -7,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/finance/person/transaction/{personId}")
+@RequestMapping("/finance/person/transaction")
 @RequiredArgsConstructor
 public class PersonTransactionController {
 
@@ -16,8 +17,9 @@ public class PersonTransactionController {
     private final UserModule userModule;
 
     @GetMapping
+    @CheckPersonAuthority
     public List<PersonTransactionDto> getTransactionsListByType(
-        @PathVariable @RequestParam Long personId,
+        @RequestParam Long personId,
         @RequestParam PersonTransactionType type
     ) {
         userModule.hasAuthority(personId);
@@ -26,8 +28,9 @@ public class PersonTransactionController {
     }
 
     @PostMapping
+    @CheckPersonAuthority
     public void add(
-        @PathVariable @RequestParam Long personId,
+        @RequestParam Long personId,
         @Validated  @RequestBody PersonTransactionDto dto
     ) {
         userModule.hasAuthority(personId);

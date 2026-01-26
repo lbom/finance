@@ -1,5 +1,6 @@
 package com.finance.person.trade;
 
+import com.finance.app.CheckPersonAuthority;
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -10,7 +11,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/finance/person/trades/{personId}")
+@RequestMapping("/finance/person/trades")
 public class TradeController {
 
     private final TradeService tradeService;
@@ -18,8 +19,9 @@ public class TradeController {
     private final UserModule userModule;
 
     @GetMapping
+    @CheckPersonAuthority
     public List<TradeDto> getList(
-        @PathVariable @RequestParam Long personId
+        @RequestParam Long personId
     ) {
         userModule.hasAuthority(personId);
         var trades = tradeService.getTrades(personId);
@@ -27,8 +29,9 @@ public class TradeController {
     }
 
     @PostMapping
+    @CheckPersonAuthority
     public void addTrade(
-        @PathVariable @RequestParam Long personId,
+        @RequestParam Long personId,
         @Validated @RequestBody TradeDto tradeDto
     ) {
         userModule.hasAuthority(personId);
@@ -37,7 +40,8 @@ public class TradeController {
     }
 
     @GetMapping("/profit")
-    public BigDecimal getProfit(@PathVariable @RequestParam Long personId) {
+    @CheckPersonAuthority
+    public BigDecimal getProfit(@RequestParam Long personId) {
         userModule.hasAuthority(personId);
         var trades = tradeService.getTrades(personId);
         return tradeService.calcProfit(trades);

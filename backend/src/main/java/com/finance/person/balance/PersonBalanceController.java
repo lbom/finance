@@ -1,5 +1,6 @@
 package com.finance.person.balance;
 
+import com.finance.app.CheckPersonAuthority;
 import com.finance.app.UserModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/finance/person/balance/{personId}")
+@RequestMapping("/finance/person/balance")
 @RequiredArgsConstructor
 public class PersonBalanceController {
 
@@ -17,17 +18,18 @@ public class PersonBalanceController {
     private final UserModule userModule;
 
     @GetMapping
+    @CheckPersonAuthority
     public List<PersonBalanceDto> getBalances(
-        @PathVariable @RequestParam Long personId
+        @RequestParam Long personId
     ) {
-        userModule.hasAuthority(personId);
         var balances = service.getBalances(personId);
         return mapper.toDto(balances);
     }
 
     @PostMapping
+    @CheckPersonAuthority
     public void add(
-        @PathVariable @RequestParam Long personId,
+        @RequestParam Long personId,
         @Validated @RequestBody PersonBalanceDto dto)
     {
         userModule.hasAuthority(personId);

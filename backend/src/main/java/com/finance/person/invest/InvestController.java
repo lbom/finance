@@ -1,6 +1,7 @@
 package com.finance.person.invest;
 
 import com.finance.app.UserModule;
+import com.finance.app.CheckPersonAuthority;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -10,33 +11,32 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/finance/person/invest/{personId}")
+@RequestMapping("/finance/person/invest")
 public class InvestController {
 
     private final InvestService investService;
     private final InvestMapper investMapper;
-    private final UserModule userModule;
 
     @GetMapping
-    public List<InvestDto> getList(@PathVariable @RequestParam Long personId) {
-        userModule.hasAuthority(personId);
+    @CheckPersonAuthority
+    public List<InvestDto> getList(@RequestParam Long personId) {
         var invests = investService.getPersonInvests(personId);
         return investMapper.toDto(invests);
     }
 
     @PostMapping
+    @CheckPersonAuthority
     public void addInvest(
-        @PathVariable @RequestParam Long personId,
+        @RequestParam Long personId,
         @Validated @RequestBody InvestDto investDto
     ) {
-        userModule.hasAuthority(personId);
         var invest = investMapper.toEntity(investDto);
         investService.addInvest(invest);
     }
 
     @GetMapping("/profit")
-    public BigDecimal getProfit(@PathVariable @RequestParam Long personId) {
-        userModule.hasAuthority(personId);
+    @CheckPersonAuthority
+    public BigDecimal getProfit(@RequestParam Long personId) {
         var invests = investService.getPersonInvests(personId);
         return investService.calcProfit(invests);
     }
