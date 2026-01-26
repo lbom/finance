@@ -1,7 +1,9 @@
 package com.finance.dictionary.currency;
 
+import jakarta.annotation.Nonnull;
+
 public record CurrencyDto(
     Long id,
-    String symbol,
-    String name
+    @Nonnull String symbol,
+    @Nonnull String name
 ) {}

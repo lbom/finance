@@ -1,7 +1,7 @@
 package com.finance.dictionary.symbol;
 
-import com.finance.person.PersonDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,13 +15,13 @@ public class SymbolController {
     private final SymbolMapper mapper;
 
     @GetMapping
-    public List<PersonDto> getPersons() {
-        var persons = service.getList();
-        return mapper.toDto(persons);
+    public List<SymbolDto> getSymbols() {
+        var list = service.getList();
+        return mapper.toDto(list);
     }
 
     @PostMapping
-    public void add(@RequestBody PersonDto dto) {
+    public void add(@Validated @RequestBody SymbolDto dto) {
         var data = mapper.toEntity(dto);
         service.save(data);
     }

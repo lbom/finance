@@ -14,10 +14,13 @@ public class Symbol {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "symbol", length = Integer.MAX_VALUE)
+    @Column(name = "institution_id", nullable = false)
+    private Long institutionId;
+
+    @Column(name = "symbol")
     private String symbol;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "\"group\"", length = Integer.MAX_VALUE)
+    @Column(name = "\"group\"")
     private SymbolGroup group;
 }

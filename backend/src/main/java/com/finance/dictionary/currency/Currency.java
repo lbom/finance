@@ -1,8 +1,13 @@
 package com.finance.dictionary.currency;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
+@Table(name = "currency")
 public class Currency {
 
     @Id
@@ -13,6 +18,6 @@ public class Currency {
     @Column(name = "symbol")
     private String symbol;
 
-    @Column(name = "name", precision = 19, scale = 2)
+    @Column(name = "name")
     private String name;
 }

@@ -1,12 +1,13 @@
 package com.finance.dictionary.currency;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/finance/dictionary/symbol")
+@RequestMapping("/finance/dictionary/currency")
 @RequiredArgsConstructor
 public class CurrencyController {
 
@@ -14,13 +15,13 @@ public class CurrencyController {
     private final CurrencyMapper mapper;
 
     @GetMapping
-    public List<CurrencyDto> getPersons() {
+    public List<CurrencyDto> getCurrencies() {
         var list = service.getList();
         return mapper.toDto(list);
     }
 
     @PostMapping
-    public void add(@RequestBody CurrencyDto dto) {
+    public void add(@Validated @RequestBody CurrencyDto dto) {
         var data = mapper.toEntity(dto);
         service.save(data);
     }

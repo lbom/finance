@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 
 public record InstitutionDto(
     Long id,
+    @Nonnull String symbol,
     @Nonnull String name,
     @Nonnull String country
 ) {}

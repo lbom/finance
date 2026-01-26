@@ -7,17 +7,20 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "institutions")
+@Table(name = "institution")
 public class Institution {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "name", length = Integer.MAX_VALUE)
+    @Column(name = "name")
     private String name;
 
-    @Column(name = "country", length = Integer.MAX_VALUE)
+    @Column(name = "symbol")
+    private String symbol;
+
+    @Column(name = "country")
     private String country;
 
 }
