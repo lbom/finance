@@ -35,17 +35,23 @@ public class PersonTransactionService {
     @Transactional
     public void createAndSavePersonTransaction(
         Long personId,
+        Long balanceId,
         BigDecimal amount,
         PersonTransactionType type,
         PersonProfitType profitType,
-        PersonSpendingType spendingType)
+        PersonSpendingType spendingType,
+        String details,
+        java.time.LocalDate localDate)
     {
         var personTransaction = new PersonTransaction();
         personTransaction.setPersonId(personId);
+        personTransaction.setBalanceId(balanceId);
         personTransaction.setAmount(amount);
         personTransaction.setType(type);
         personTransaction.setProfitType(profitType);
         personTransaction.setSpendingType(spendingType);
+        personTransaction.setDetails(details);
+        personTransaction.setLocalDate(localDate);
         repository.save(personTransaction);
     }
 }

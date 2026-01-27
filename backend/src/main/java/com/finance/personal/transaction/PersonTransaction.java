@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -21,6 +22,12 @@ public class PersonTransaction {
 
     @Column(name = "balance_id", nullable = false)
     private Long balanceId;
+
+    @Column(name = "date", nullable = false)
+    private LocalDate localDate;
+
+    @Column(name = "details", nullable = false)
+    private String details;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = Integer.MAX_VALUE)

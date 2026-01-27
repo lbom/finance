@@ -51,10 +51,13 @@ public class PersonTransactionRecurrentService {
         transactionTemplate.execute(status -> {
             personTransactionService.createAndSavePersonTransaction(
                 recurrentTransaction.getPersonId(),
+                recurrentTransaction.getBalanceId(),
                 recurrentTransaction.getAmount(),
                 recurrentTransaction.getType(),
                 recurrentTransaction.getProfitType(),
-                recurrentTransaction.getSpendingType()
+                recurrentTransaction.getSpendingType(),
+                recurrentTransaction.getName(),
+                java.time.LocalDate.now()
             );
 
             personBalanceService.update(

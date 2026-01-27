@@ -205,8 +205,9 @@ export const Personal = () => {
         }
     });
 
+    const today = new Date().toISOString().slice(0, 10);
     const { control, handleSubmit, reset } = useForm({
-        defaultValues: { category: '', amount: '' }
+        defaultValues: { category: '', amount: '', localDate: today, details: '' }
     });
     const {
         control: recurrentControl,
@@ -256,7 +257,12 @@ export const Personal = () => {
 
     const handleOpen = (section) => {
         setActiveSection(section);
-        reset({ category: section === 'PROFIT' ? ProfitTypes[0] : SpendingTypes[0], amount: '' });
+        reset({
+            category: section === 'PROFIT' ? ProfitTypes[0] : SpendingTypes[0],
+            amount: '',
+            localDate: today,
+            details: ''
+        });
         setDialogOpen(true);
     };
 
@@ -281,6 +287,8 @@ export const Personal = () => {
             amount: Number(data.amount),
             personId: activePersonId,
             balanceId: activeBalanceId,
+            localDate: data.localDate,
+            details: data.details?.trim() || '',
             // Map the selection to the correct DTO field
             profitType: activeSection === 'PROFIT' ? data.category : null,
             spendingType: activeSection === 'SPENDING' ? data.category : null
@@ -678,6 +686,36 @@ export const Personal = () => {
                                             startAdornment: '$',
                                             sx: { borderRadius: 2, fontSize: '1.2rem', fontWeight: 600 }
                                         }}
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name="localDate"
+                                control={control}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Date"
+                                        type="date"
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name="details"
+                                control={control}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Details"
+                                        fullWidth
+                                        multiline
+                                        minRows={2}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                                     />
                                 )}
                             />
