@@ -10,7 +10,8 @@ import { Add, TrendingUp, TrendingDown, HourglassEmpty, ShowChart, CandlestickCh
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints.js';
 
-const TradeTypes = ["POLITICAL_INSIGHT", "ONCHAIN_DATA", "ECONOMIC_DATA", "STRAIGHT_FINANCIAL"];
+const TradeTypes = ["POLITICAL_INSIGHT", "RANDOM_SELF_PREDICTION",
+    "AI_IDEA", "ONCHAIN_DATA", "ECONOMIC_DATA", "STRAIGHT_FINANCIAL"];
 
 // FIX: Safe formatter
 const formatMoney = (val) => {
@@ -47,6 +48,7 @@ export const Trades = () => {
         queryFn: () => api.trades.list(activePersonId),
         enabled: !!activePersonId,
     });
+    const symbolMap = new Map((symbols || []).map((symbol) => [symbol.id, symbol]));
 
     const mutation = useMutation({
         mutationFn: (data) => api.trades.create(activePersonId, data),
@@ -151,6 +153,20 @@ export const Trades = () => {
                             fontSize: '0.75rem'
                         }}
                     />
+                </Box>
+            )
+        },
+        {
+            field: 'symbolId',
+            headerName: 'Symbol',
+            width: 160,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {symbolMap.get(params.value)?.symbol || '—'}
+                    </Typography>
                 </Box>
             )
         },
@@ -278,7 +294,9 @@ export const Trades = () => {
                         columns={columns}
                         loading={isLoading || personsLoading}
                         disableRowSelectionOnClick
-                        rowHeight={60}
+                        rowHeight={48}
+                        columnHeaderHeight={44}
+                        density="compact"
                         initialState={{
                             pagination: { paginationModel: { pageSize: 10 } },
                             sorting: { sortModel: [{ field: 'startDate', sort: 'desc' }] },
@@ -288,6 +306,7 @@ export const Trades = () => {
                             border: 'none',
                             '& .MuiDataGrid-cell': { alignItems: 'center' },
                             '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                            '& .MuiDataGrid-columnHeaders': { bgcolor: 'transparent' },
                         }}
                     />
                 </Box>

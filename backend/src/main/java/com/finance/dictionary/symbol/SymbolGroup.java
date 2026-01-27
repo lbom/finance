@@ -4,5 +4,6 @@ public enum SymbolGroup {
     SECURITY,
     FUTURES,
     CRYPTO,
-    DEPOSIT
+    DEPOSIT,
+    POLYMARKET
 }

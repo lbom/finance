@@ -305,7 +305,9 @@ export const Investments = () => {
                         columns={columns}
                         loading={isLoading || personsLoading}
                         disableRowSelectionOnClick
-                        rowHeight={60} // Taller rows for modern feel
+                        rowHeight={48}
+                        columnHeaderHeight={44}
+                        density="compact"
                         initialState={{
                             pagination: { paginationModel: { pageSize: 10 } },
                             sorting: { sortModel: [{ field: 'startDate', sort: 'desc' }] },
@@ -316,6 +318,7 @@ export const Investments = () => {
                             '& .MuiDataGrid-cell': { alignItems: 'center' },
                             // Remove column separators
                             '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                            '& .MuiDataGrid-columnHeaders': { bgcolor: 'transparent' },
                         }}
                     />
                 </Box>

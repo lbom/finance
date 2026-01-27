@@ -25,7 +25,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Controller, useForm } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
-const SymbolGroups = ['SECURITY', 'FUTURES', 'CRYPTO', 'DEPOSIT'];
+const SymbolGroups = ['SECURITY', 'FUTURES', 'CRYPTO', 'DEPOSIT', 'POLYMARKET'];
 
 const DictionaryCard = ({ title, subtitle, icon, onAdd, rows, columns, loading }) => (
     <Paper sx={{ p: 0, borderRadius: 3, overflow: 'hidden' }}>
