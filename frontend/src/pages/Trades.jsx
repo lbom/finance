@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box, Button, Typography, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, MenuItem, Grid, Chip, Paper, Avatar
+    DialogActions, TextField, MenuItem, Grid, Chip, Paper, Avatar,
+    IconButton, Tooltip
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, TrendingUp, TrendingDown, HourglassEmpty, ShowChart, CandlestickChart, Delete } from '@mui/icons-material';
+import { Add, TrendingUp, TrendingDown, HourglassEmpty, ShowChart, CandlestickChart, Delete, EditOutlined, DeleteOutline } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints.js';
 
@@ -118,25 +119,31 @@ export const Trades = () => {
             field: 'startDate',
             headerName: 'Date Opened',
             width: 160,
+            align: 'center',
+            headerAlign: 'center',
             valueFormatter: (value) => dateFormatter(value)
         },
         {
             field: 'type',
             headerName: 'Strategy',
             width: 180,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    label={params.value?.replace(/_/g, ' ')} // clean formatting
-                    size="small"
-                    // STYLE: Mint background, dark green text
-                    sx={{
-                        bgcolor: 'secondary.main',
-                        color: 'primary.dark',
-                        fontWeight: 600,
-                        border: 'none',
-                        fontSize: '0.75rem'
-                    }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value?.replace(/_/g, ' ')} // clean formatting
+                        size="small"
+                        // STYLE: Mint background, dark green text
+                        sx={{
+                            bgcolor: 'secondary.main',
+                            color: 'primary.dark',
+                            fontWeight: 600,
+                            border: 'none',
+                            fontSize: '0.75rem'
+                        }}
+                    />
+                </Box>
             )
         },
         {
@@ -185,7 +192,7 @@ export const Trades = () => {
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => (
-                <Box sx={{ width: '100%', textAlign: 'center', py: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
                     <Typography variant="body2" color="text.secondary" noWrap>
                         {params.value}
                     </Typography>
@@ -198,20 +205,28 @@ export const Trades = () => {
             width: 170,
             sortable: false,
             filterable: false,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="small" onClick={() => handleOpenEdit(params.row)}>
-                        Edit
-                    </Button>
-                    <Button
-                        size="small"
-                        color="error"
-                        startIcon={<Delete fontSize="small" />}
-                        onClick={() => deleteMutation.mutate(params.row.id)}
-                        disabled={!activePersonId || deleteMutation.isLoading}
-                    >
-                        Delete
-                    </Button>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 1 }}>
+                    <Tooltip title="Edit">
+                        <IconButton onClick={() => handleOpenEdit(params.row)} size="small" aria-label="Edit">
+                            <EditOutlined fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                        <span>
+                            <IconButton
+                                color="error"
+                                onClick={() => deleteMutation.mutate(params.row.id)}
+                                size="small"
+                                aria-label="Delete"
+                                disabled={!activePersonId || deleteMutation.isLoading}
+                            >
+                                <DeleteOutline fontSize="small" />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
                 </Box>
             )
         }

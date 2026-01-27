@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box, Paper, Typography, Button, Grid, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, MenuItem, Chip, Avatar,
-    Switch, FormControlLabel
+    Switch, FormControlLabel, IconButton, Tooltip
 } from '@mui/material';
 import {
     Add,
@@ -12,14 +12,16 @@ import {
     TrendingUp,
     TrendingDown,
     Repeat,
-    AccountBalanceWallet
+    AccountBalanceWallet,
+    EditOutlined,
+    DeleteOutline
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
 const ProfitTypes = ["SALARY", "BUSINESS", "INVESTMENT", "TRADE", "GIFT", "OTHER"];
-const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "OTHER"];
+const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "SUBSCRIPTION", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "OTHER"];
 const BalanceTypes = ["REGULAR", "CRYPTO"];
 
 // Safe Currency Formatter
@@ -29,7 +31,17 @@ const formatMoney = (val) => {
 };
 
 // --- Reusable Section Component ---
-const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disableAdd, onDelete }) => {
+const FinanceSection = ({
+    title,
+    subtitle,
+    data,
+    isLoading,
+    onAdd,
+    type,
+    disableAdd,
+    onDelete,
+    getBalanceLabel
+}) => {
 
     // Determine Styles based on Type (Income vs Expense)
     const isIncome = type === 'income';
@@ -40,26 +52,33 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disable
 
     const rows = (data || []).map(item => ({
         ...item,
-        displayCategory: item.profitType || item.spendingType || 'OTHER'
+        displayCategory: item.profitType || item.spendingType || 'OTHER',
+        displayBalance: getBalanceLabel?.(item.balanceId) || '—',
+        displayDetails: item.details || '—'
     }));
 
     const columns = [
         {
             field: 'displayCategory',
             headerName: 'Category',
-            flex: 1,
+            flex: 0.9,
+            minWidth: 120,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    label={params.value?.replace(/_/g, ' ')}
-                    size="small"
-                    sx={{
-                        bgcolor: chipBg,
-                        color: chipText,
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        textTransform: 'capitalize'
-                    }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value?.replace(/_/g, ' ')}
+                        size="small"
+                        sx={{
+                            bgcolor: chipBg,
+                            color: chipText,
+                            fontWeight: 600,
+                            fontSize: '0.75rem',
+                            textTransform: 'capitalize'
+                        }}
+                    />
+                </Box>
             )
         },
         {
@@ -77,6 +96,36 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disable
                 </Box>
             )
         },
+        {
+            field: 'displayBalance',
+            headerName: 'Balance',
+            flex: 1,
+            minWidth: 140,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value}
+                    </Typography>
+                </Box>
+            )
+        },
+        {
+            field: 'displayDetails',
+            headerName: 'Details',
+            flex: 1.2,
+            minWidth: 140,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value}
+                    </Typography>
+                </Box>
+            )
+        }
     ];
     if (onDelete) {
         columns.push({
@@ -86,9 +135,11 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disable
             sortable: false,
             filterable: false,
             renderCell: (params) => (
-                <Button size="small" color="error" onClick={() => onDelete(params.row)}>
-                    Delete
-                </Button>
+                <Tooltip title="Delete">
+                    <IconButton color="error" onClick={() => onDelete(params.row)} size="small" aria-label="Delete">
+                        <DeleteOutline fontSize="small" />
+                    </IconButton>
+                </Tooltip>
             )
         });
     }
@@ -126,7 +177,9 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disable
                     columns={columns}
                     loading={isLoading}
                     disableRowSelectionOnClick
-                    rowHeight={55}
+                    rowHeight={48}
+                    columnHeaderHeight={44}
+                    density="compact"
                     initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
                     sx={{
                         border: 'none',
@@ -149,9 +202,10 @@ export const Personal = () => {
     const [balanceOpen, setBalanceOpen] = useState(false);
     const [balanceEditing, setBalanceEditing] = useState(null);
     const [personOpen, setPersonOpen] = useState(false);
+    const [selectedPersonId, setSelectedPersonId] = useState(null);
 
     const { data: persons, isLoading: personsLoading } = useQuery({ queryKey: ['persons'], queryFn: api.person.list });
-    const activePersonId = persons?.[0]?.id;
+    const activePersonId = selectedPersonId;
 
     const { data: balances, isLoading: balancesLoading } = useQuery({
         queryKey: ['balances', activePersonId],
@@ -233,7 +287,7 @@ export const Personal = () => {
 
     const today = new Date().toISOString().slice(0, 10);
     const { control, handleSubmit, reset } = useForm({
-        defaultValues: { category: '', amount: '', localDate: today, details: '' }
+        defaultValues: { category: '', amount: '', localDate: today, details: '', balanceId: '' }
     });
     const {
         control: recurrentControl,
@@ -275,6 +329,16 @@ export const Personal = () => {
     const recurrentCategory = useWatch({ control: recurrentControl, name: 'category' });
 
     useEffect(() => {
+        if (!persons?.length) {
+            setSelectedPersonId(null);
+            return;
+        }
+        if (!selectedPersonId || !persons.some((person) => person.id === selectedPersonId)) {
+            setSelectedPersonId(persons[0].id);
+        }
+    }, [persons, selectedPersonId]);
+
+    useEffect(() => {
         if (!recurrentType) return;
         const options = recurrentType === 'SPENDING' ? SpendingTypes : ProfitTypes;
         if (!options.includes(recurrentCategory)) {
@@ -288,7 +352,8 @@ export const Personal = () => {
             category: section === 'PROFIT' ? ProfitTypes[0] : SpendingTypes[0],
             amount: '',
             localDate: today,
-            details: ''
+            details: '',
+            balanceId: activeBalanceId || ''
         });
         setDialogOpen(true);
     };
@@ -313,7 +378,7 @@ export const Personal = () => {
             type: activeSection,
             amount: Number(data.amount),
             personId: activePersonId,
-            balanceId: activeBalanceId,
+            balanceId: Number(data.balanceId),
             localDate: data.localDate,
             details: data.details?.trim() || '',
             // Map the selection to the correct DTO field
@@ -412,18 +477,24 @@ export const Personal = () => {
             field: 'name',
             headerName: 'Name',
             flex: 1,
-            minWidth: 160
+            minWidth: 160,
+            align: 'center',
+            headerAlign: 'center'
         },
         {
             field: 'type',
             headerName: 'Type',
             width: 120,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    label={params.value?.replace(/_/g, ' ')}
-                    size="small"
-                    sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value?.replace(/_/g, ' ')}
+                        size="small"
+                        sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
+                    />
+                </Box>
             )
         },
         {
@@ -431,18 +502,24 @@ export const Personal = () => {
             headerName: 'Category',
             flex: 1,
             minWidth: 140,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    label={params.value?.replace(/_/g, ' ')}
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 600 }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value?.replace(/_/g, ' ')}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 600 }}
+                    />
+                </Box>
             )
         },
         {
             field: 'periodDays',
             headerName: 'Every (days)',
-            width: 130
+            width: 130,
+            align: 'center',
+            headerAlign: 'center'
         },
         {
             field: 'amount',
@@ -460,16 +537,20 @@ export const Personal = () => {
             field: 'isActive',
             headerName: 'Active',
             width: 100,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    label={params.value ? 'ON' : 'OFF'}
-                    size="small"
-                    sx={{
-                        bgcolor: params.value ? 'secondary.main' : 'rgba(0,0,0,0.08)',
-                        color: params.value ? 'primary.dark' : 'text.secondary',
-                        fontWeight: 600
-                    }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value ? 'ON' : 'OFF'}
+                        size="small"
+                        sx={{
+                            bgcolor: params.value ? 'secondary.main' : 'rgba(0,0,0,0.08)',
+                            color: params.value ? 'primary.dark' : 'text.secondary',
+                            fontWeight: 600
+                        }}
+                    />
+                </Box>
             )
         },
         {
@@ -478,10 +559,14 @@ export const Personal = () => {
             width: 120,
             sortable: false,
             filterable: false,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Button size="small" onClick={() => handleRecurrentOpenEdit(params.row)}>
-                    Edit
-                </Button>
+                <Tooltip title="Edit">
+                    <IconButton onClick={() => handleRecurrentOpenEdit(params.row)} size="small" aria-label="Edit">
+                        <EditOutlined fontSize="small" />
+                    </IconButton>
+                </Tooltip>
             )
         }
     ];
@@ -494,16 +579,26 @@ export const Personal = () => {
         currency: currencyMap.get(item.currencyId),
         institution: institutionMap.get(item.institutionId)
     }));
+    const balanceLabelMap = new Map(
+        (balanceRows || []).map((balance) => ([
+            balance.id,
+            `${balance.institution?.name || 'Institution'} · ${balance.currency?.symbol || '—'}`
+        ]))
+    );
     const balanceColumns = [
         {
             field: 'institution',
             headerName: 'Institution',
             flex: 1,
             minWidth: 160,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Typography variant="body2" color="text.secondary" noWrap>
-                    {params.value?.name || '—'}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value?.name || '—'}
+                    </Typography>
+                </Box>
             )
         },
         {
@@ -511,24 +606,32 @@ export const Personal = () => {
             headerName: 'Currency',
             flex: 1,
             minWidth: 160,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    label={params.value?.symbol || '—'}
-                    size="small"
-                    sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value?.symbol || '—'}
+                        size="small"
+                        sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
+                    />
+                </Box>
             )
         },
         {
             field: 'type',
             headerName: 'Type',
             width: 120,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    label={params.value}
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 600 }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 600 }}
+                    />
+                </Box>
             )
         },
         {
@@ -549,10 +652,14 @@ export const Personal = () => {
             width: 120,
             sortable: false,
             filterable: false,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Button size="small" onClick={() => handleBalanceOpenEdit(params.row)}>
-                    Edit
-                </Button>
+                <Tooltip title="Edit">
+                    <IconButton onClick={() => handleBalanceOpenEdit(params.row)} size="small" aria-label="Edit">
+                        <EditOutlined fontSize="small" />
+                    </IconButton>
+                </Tooltip>
             )
         }
     ];
@@ -562,14 +669,31 @@ export const Personal = () => {
             <Box mb={4}>
                 <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} mb={1}>
                     <Typography variant="h4">Cash Flow</Typography>
-                    <Button
-                        variant="outlined"
-                        startIcon={<Add />}
-                        onClick={() => setPersonOpen(true)}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        Add Person
-                    </Button>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <TextField
+                            select
+                            label="Person"
+                            value={activePersonId || ''}
+                            onChange={(event) => setSelectedPersonId(Number(event.target.value))}
+                            sx={{ minWidth: 220 }}
+                            SelectProps={{ sx: { borderRadius: 2 } }}
+                            disabled={personsLoading || !(persons || []).length}
+                        >
+                            {(persons || []).map((person) => (
+                                <MenuItem key={person.id} value={person.id}>
+                                    {person.name}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                        <Button
+                            variant="outlined"
+                            startIcon={<Add />}
+                            onClick={() => setPersonOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Add Person
+                        </Button>
+                    </Box>
                 </Box>
                 <Typography variant="body1" color="text.secondary">
                     Track your personal income streams and daily expenditures.
@@ -640,6 +764,7 @@ export const Personal = () => {
                         onAdd={() => handleOpen('PROFIT')}
                         onDelete={(row) => deleteTransaction.mutate(row.id)}
                         disableAdd={!canTransact}
+                        getBalanceLabel={(balanceId) => balanceLabelMap.get(balanceId)}
                     />
                 </Box>
 
@@ -653,6 +778,7 @@ export const Personal = () => {
                         onAdd={() => handleOpen('SPENDING')}
                         onDelete={(row) => deleteTransaction.mutate(row.id)}
                         disableAdd={!canTransact}
+                        getBalanceLabel={(balanceId) => balanceLabelMap.get(balanceId)}
                     />
                 </Box>
             </Box>
@@ -709,6 +835,27 @@ export const Personal = () => {
                     </DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
+                            <Controller
+                                name="balanceId"
+                                control={control}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Balance"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                        disabled={!activePersonId || balancesLoading || !(balanceRows || []).length}
+                                    >
+                                        {(balanceRows || []).map((balance) => (
+                                            <MenuItem key={balance.id} value={balance.id}>
+                                                {balance.institution?.name || 'Institution'} · {balance.currency?.symbol || '—'}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
                             <Controller
                                 name="category"
                                 control={control}

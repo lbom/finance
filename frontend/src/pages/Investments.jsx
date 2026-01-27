@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box, Button, Typography, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, MenuItem, Grid, Chip, Tooltip, Paper, Avatar
+    DialogActions, TextField, MenuItem, Grid, Chip, Tooltip, Paper, Avatar,
+    IconButton
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, TrendingUp, TrendingDown, AccessTime, Savings, PieChart, AccountBalance, Delete } from '@mui/icons-material';
+import { Add, TrendingUp, TrendingDown, AccessTime, Savings, PieChart, AccountBalance, Delete, EditOutlined, DeleteOutline } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
@@ -129,41 +130,50 @@ export const Investments = () => {
             field: 'startDate',
             headerName: 'Inv. Date',
             width: 130,
+            align: 'center',
+            headerAlign: 'center',
             valueFormatter: (value) => dateFormatter(value)
         },
         {
             field: 'endDate',
             headerName: 'Maturity',
             width: 130,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Typography
-                    variant="body2"
-                    color={params.value ? 'text.secondary' : 'primary.main'}
-                    fontWeight={params.value ? 400 : 600}
-                    fontSize="0.85rem"
-                    sx={{ display: 'flex', alignItems: 'center', height: '100%' }}
-                >
-                    {params.value ? dateFormatter(params.value) : 'Perpetual'}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+                    <Typography
+                        variant="body2"
+                        color={params.value ? 'text.secondary' : 'primary.main'}
+                        fontWeight={params.value ? 400 : 600}
+                        fontSize="0.85rem"
+                    >
+                        {params.value ? dateFormatter(params.value) : 'Perpetual'}
+                    </Typography>
+                </Box>
             )
         },
         {
             field: 'type',
             headerName: 'Asset Class',
             width: 160,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Chip
-                    icon={<AccountBalance sx={{ fontSize: 16 }} />}
-                    label={params.value?.replace('_', ' ')}
-                    size="small"
-                    // STYLE UPDATE: Soft Mint look
-                    sx={{
-                        bgcolor: 'secondary.main',
-                        color: 'primary.dark',
-                        fontWeight: 600,
-                        border: 'none'
-                    }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        icon={<AccountBalance sx={{ fontSize: 16 }} />}
+                        label={params.value?.replace('_', ' ')}
+                        size="small"
+                        // STYLE UPDATE: Soft Mint look
+                        sx={{
+                            bgcolor: 'secondary.main',
+                            color: 'primary.dark',
+                            fontWeight: 600,
+                            border: 'none'
+                        }}
+                    />
+                </Box>
             )
         },
         {
@@ -211,10 +221,14 @@ export const Investments = () => {
             headerName: 'Thesis',
             flex: 1,
             minWidth: 220,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Typography variant="body2" color="text.secondary" noWrap sx={{ py: 1.5 }}>
-                    {params.value}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value}
+                    </Typography>
+                </Box>
             )
         },
         {
@@ -223,20 +237,28 @@ export const Investments = () => {
             width: 170,
             sortable: false,
             filterable: false,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="small" onClick={() => handleOpenEdit(params.row)}>
-                        Edit
-                    </Button>
-                    <Button
-                        size="small"
-                        color="error"
-                        startIcon={<Delete fontSize="small" />}
-                        onClick={() => deleteMutation.mutate(params.row.id)}
-                        disabled={!activePersonId || deleteMutation.isLoading}
-                    >
-                        Delete
-                    </Button>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 1 }}>
+                    <Tooltip title="Edit">
+                        <IconButton onClick={() => handleOpenEdit(params.row)} size="small" aria-label="Edit">
+                            <EditOutlined fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                        <span>
+                            <IconButton
+                                color="error"
+                                onClick={() => deleteMutation.mutate(params.row.id)}
+                                size="small"
+                                aria-label="Delete"
+                                disabled={!activePersonId || deleteMutation.isLoading}
+                            >
+                                <DeleteOutline fontSize="small" />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
                 </Box>
             )
         }
