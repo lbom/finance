@@ -23,6 +23,9 @@ export const api = {
     personal: {
         list: (personId, type) => client.get('/finance/personal/transaction', { params: { personId, type } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/transaction', data, { params: { personId } }),
+        update: (personId, transactionId, data) => (
+            client.put(`/finance/personal/transaction/${transactionId}`, data, { params: { personId } })
+        ),
         delete: (personId, transactionId) => client.delete(`/finance/personal/transaction/${transactionId}`, { params: { personId } }),
     },
     recurrent: {

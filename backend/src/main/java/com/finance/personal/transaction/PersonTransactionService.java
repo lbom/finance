@@ -66,4 +66,30 @@ public class PersonTransactionService {
                 personBalanceService.update(tx.getBalanceId(), tx.getAmount(), isSubtract);
             });
     }
+
+    @Transactional
+    public void updateTransaction(
+        Long personId,
+        Long transactionId,
+        PersonTransactionDto dto
+    ) {
+        repository.findById(transactionId)
+            .filter(tx -> tx.getPersonId().equals(personId))
+            .ifPresent(tx -> {
+                boolean reverseSubtract = tx.getType() != PersonTransactionType.SPENDING;
+                personBalanceService.update(tx.getBalanceId(), tx.getAmount(), reverseSubtract);
+
+                tx.setBalanceId(dto.balanceId());
+                tx.setAmount(dto.amount());
+                tx.setType(dto.type());
+                tx.setProfitType(dto.profitType());
+                tx.setSpendingType(dto.spendingType());
+                tx.setDetails(dto.details());
+                tx.setLocalDate(dto.localDate());
+                repository.save(tx);
+
+                boolean applySubtract = dto.type() == PersonTransactionType.SPENDING;
+                personBalanceService.update(dto.balanceId(), dto.amount(), applySubtract);
+            });
+    }
 }

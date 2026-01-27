@@ -40,6 +40,7 @@ const FinanceSection = ({
     type,
     disableAdd,
     onDelete,
+    onEdit,
     getBalanceLabel
 }) => {
 
@@ -127,19 +128,32 @@ const FinanceSection = ({
             )
         }
     ];
-    if (onDelete) {
+    if (onDelete || onEdit) {
         columns.push({
             field: 'actions',
             headerName: '',
-            width: 120,
+            width: 72,
             sortable: false,
             filterable: false,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Tooltip title="Delete">
-                    <IconButton color="error" onClick={() => onDelete(params.row)} size="small" aria-label="Delete">
-                        <DeleteOutline fontSize="small" />
-                    </IconButton>
-                </Tooltip>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', gap: 0.25 }}>
+                    {onEdit && (
+                        <Tooltip title="Edit">
+                            <IconButton onClick={() => onEdit(params.row)} size="small" aria-label="Edit">
+                                <EditOutlined fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                    {onDelete && (
+                        <Tooltip title="Delete">
+                            <IconButton color="error" onClick={() => onDelete(params.row)} size="small" aria-label="Delete">
+                                <DeleteOutline fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                </Box>
             )
         });
     }
@@ -203,6 +217,7 @@ export const Personal = () => {
     const [balanceEditing, setBalanceEditing] = useState(null);
     const [personOpen, setPersonOpen] = useState(false);
     const [selectedPersonId, setSelectedPersonId] = useState(null);
+    const [transactionEditing, setTransactionEditing] = useState(null);
 
     const { data: persons, isLoading: personsLoading } = useQuery({ queryKey: ['persons'], queryFn: api.person.list });
     const activePersonId = selectedPersonId;
@@ -245,6 +260,15 @@ export const Personal = () => {
         onSuccess: (_, variables) => {
             // Invalidate specifically the type we just added
             queryClient.invalidateQueries(['personal', activePersonId, variables.type]);
+            handleClose();
+        }
+    });
+    const updateTransaction = useMutation({
+        mutationFn: ({ transactionId, payload }) => api.personal.update(activePersonId, transactionId, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
+            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
+            queryClient.invalidateQueries(['balances', activePersonId]);
             handleClose();
         }
     });
@@ -348,6 +372,7 @@ export const Personal = () => {
 
     const handleOpen = (section) => {
         setActiveSection(section);
+        setTransactionEditing(null);
         reset({
             category: section === 'PROFIT' ? ProfitTypes[0] : SpendingTypes[0],
             amount: '',
@@ -358,7 +383,10 @@ export const Personal = () => {
         setDialogOpen(true);
     };
 
-    const handleClose = () => setDialogOpen(false);
+    const handleClose = () => {
+        setDialogOpen(false);
+        setTransactionEditing(null);
+    };
     const handleRecurrentClose = () => {
         setRecurrentOpen(false);
         setRecurrentEditing(null);
@@ -385,7 +413,26 @@ export const Personal = () => {
             profitType: activeSection === 'PROFIT' ? data.category : null,
             spendingType: activeSection === 'SPENDING' ? data.category : null
         };
+        if (transactionEditing?.id) {
+            updateTransaction.mutate({ transactionId: transactionEditing.id, payload });
+            return;
+        }
         addTransaction.mutate(payload);
+    };
+
+    const handleEditTransaction = (row) => {
+        const rowType = row.type || 'PROFIT';
+        const category = row.profitType || row.spendingType || (rowType === 'PROFIT' ? ProfitTypes[0] : SpendingTypes[0]);
+        setActiveSection(rowType);
+        setTransactionEditing(row);
+        reset({
+            category,
+            amount: row.amount ?? '',
+            localDate: row.localDate || today,
+            details: row.details || '',
+            balanceId: row.balanceId ?? activeBalanceId ?? ''
+        });
+        setDialogOpen(true);
     };
 
     const handleRecurrentOpenAdd = () => {
@@ -763,6 +810,7 @@ export const Personal = () => {
                         isLoading={l1 || personsLoading || balancesLoading}
                         onAdd={() => handleOpen('PROFIT')}
                         onDelete={(row) => deleteTransaction.mutate(row.id)}
+                        onEdit={handleEditTransaction}
                         disableAdd={!canTransact}
                         getBalanceLabel={(balanceId) => balanceLabelMap.get(balanceId)}
                     />
@@ -777,6 +825,7 @@ export const Personal = () => {
                         isLoading={l2 || personsLoading || balancesLoading}
                         onAdd={() => handleOpen('SPENDING')}
                         onDelete={(row) => deleteTransaction.mutate(row.id)}
+                        onEdit={handleEditTransaction}
                         disableAdd={!canTransact}
                         getBalanceLabel={(balanceId) => balanceLabelMap.get(balanceId)}
                     />
@@ -830,7 +879,9 @@ export const Personal = () => {
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <DialogTitle>
                         <Typography variant="h6" fontWeight="bold">
-                            {activeSection === 'PROFIT' ? 'Add Income' : 'Log Expense'}
+                            {transactionEditing
+                                ? (activeSection === 'PROFIT' ? 'Edit Income' : 'Edit Expense')
+                                : (activeSection === 'PROFIT' ? 'Add Income' : 'Log Expense')}
                         </Typography>
                     </DialogTitle>
                     <DialogContent>
@@ -922,11 +973,11 @@ export const Personal = () => {
                         <Button
                             type="submit"
                             variant="contained"
-                            disabled={addTransaction.isLoading}
+                            disabled={addTransaction.isLoading || updateTransaction.isLoading}
                             color={activeSection === 'PROFIT' ? "success" : "error"}
                             sx={{ borderRadius: 2, px: 3 }}
                         >
-                            {addTransaction.isLoading ? 'Saving...' : 'Save'}
+                            {(addTransaction.isLoading || updateTransaction.isLoading) ? 'Saving...' : (transactionEditing ? 'Update' : 'Save')}
                         </Button>
                     </DialogActions>
                 </form>
