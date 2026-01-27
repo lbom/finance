@@ -27,7 +27,7 @@ const BalanceTypes = ["REGULAR", "CRYPTO"];
 // Safe Currency Formatter
 const formatMoney = (val) => {
     if (val == null) return '-';
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(val);
 };
 
 // --- Reusable Section Component ---
@@ -291,6 +291,12 @@ export const Personal = () => {
             handleRecurrentClose();
         }
     });
+    const deleteRecurrent = useMutation({
+        mutationFn: (recurrentId) => api.recurrent.delete(activePersonId, recurrentId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['recurrent', activePersonId]);
+        }
+    });
     const saveBalance = useMutation({
         mutationFn: (payload) => api.balance.create(activePersonId, payload),
         onSuccess: () => {
@@ -298,6 +304,14 @@ export const Personal = () => {
             queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
             queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
             handleBalanceClose();
+        }
+    });
+    const deleteBalance = useMutation({
+        mutationFn: (balanceId) => api.balance.delete(activePersonId, balanceId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['balances', activePersonId]);
+            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
+            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
         }
     });
     const createPerson = useMutation({
@@ -325,7 +339,8 @@ export const Personal = () => {
             type: 'PROFIT',
             category: ProfitTypes[0],
             amount: '',
-            isActive: true
+            isActive: true,
+            balanceId: ''
         }
     });
     const {
@@ -443,7 +458,8 @@ export const Personal = () => {
             type: 'PROFIT',
             category: ProfitTypes[0],
             amount: '',
-            isActive: true
+            isActive: true,
+            balanceId: activeBalanceId || ''
         });
         setRecurrentOpen(true);
     };
@@ -457,7 +473,8 @@ export const Personal = () => {
             type: row.type || 'PROFIT',
             category,
             amount: row.amount ?? '',
-            isActive: !!row.isActive
+            isActive: !!row.isActive,
+            balanceId: row.balanceId ?? activeBalanceId ?? ''
         });
         setRecurrentOpen(true);
     };
@@ -467,7 +484,7 @@ export const Personal = () => {
         const payload = {
             id: recurrentEditing?.id,
             personId: activePersonId,
-            balanceId: activeBalanceId,
+            balanceId: Number(data.balanceId),
             name: data.name.trim(),
             periodDays: Number(data.periodDays),
             amount: Number(data.amount),
@@ -514,9 +531,25 @@ export const Personal = () => {
         saveBalance.mutate(payload);
     };
 
+    const currencyMap = new Map((currencies || []).map((c) => [c.id, c]));
+    const institutionMap = new Map((institutions || []).map((i) => [i.id, i]));
+    const balanceRows = (balances || []).map(item => ({
+        ...item,
+        type: item.type || 'REGULAR',
+        currency: currencyMap.get(item.currencyId),
+        institution: institutionMap.get(item.institutionId)
+    }));
+    const balanceLabelMap = new Map(
+        (balanceRows || []).map((balance) => ([
+            balance.id,
+            `${balance.institution?.name || 'Institution'} · ${balance.currency?.symbol || '—'}`
+        ]))
+    );
+
     const recurrentRows = (recurrent || []).map(item => ({
         ...item,
-        displayCategory: item.profitType || item.spendingType || 'OTHER'
+        displayCategory: item.profitType || item.spendingType || 'OTHER',
+        displayBalance: balanceLabelMap.get(item.balanceId) || '—'
     }));
 
     const recurrentColumns = [
@@ -562,6 +595,21 @@ export const Personal = () => {
             )
         },
         {
+            field: 'displayBalance',
+            headerName: 'Balance',
+            flex: 1,
+            minWidth: 180,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value}
+                    </Typography>
+                </Box>
+            )
+        },
+        {
             field: 'periodDays',
             headerName: 'Every (days)',
             width: 130,
@@ -603,35 +651,34 @@ export const Personal = () => {
         {
             field: 'actions',
             headerName: '',
-            width: 120,
+            width: 90,
             sortable: false,
             filterable: false,
             align: 'center',
             headerAlign: 'center',
+            cellClassName: 'recurrent-actions-cell',
             renderCell: (params) => (
-                <Tooltip title="Edit">
-                    <IconButton onClick={() => handleRecurrentOpenEdit(params.row)} size="small" aria-label="Edit">
-                        <EditOutlined fontSize="small" />
-                    </IconButton>
-                </Tooltip>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', gap: 0.25 }}>
+                    <Tooltip title="Edit">
+                        <IconButton onClick={() => handleRecurrentOpenEdit(params.row)} size="small" aria-label="Edit">
+                            <EditOutlined fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                        <IconButton
+                            color="error"
+                            onClick={() => deleteRecurrent.mutate(params.row.id)}
+                            size="small"
+                            aria-label="Delete"
+                        >
+                            <DeleteOutline fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
             )
         }
     ];
 
-    const currencyMap = new Map((currencies || []).map((c) => [c.id, c]));
-    const institutionMap = new Map((institutions || []).map((i) => [i.id, i]));
-    const balanceRows = (balances || []).map(item => ({
-        ...item,
-        type: item.type || 'REGULAR',
-        currency: currencyMap.get(item.currencyId),
-        institution: institutionMap.get(item.institutionId)
-    }));
-    const balanceLabelMap = new Map(
-        (balanceRows || []).map((balance) => ([
-            balance.id,
-            `${balance.institution?.name || 'Institution'} · ${balance.currency?.symbol || '—'}`
-        ]))
-    );
     const balanceColumns = [
         {
             field: 'institution',
@@ -782,20 +829,55 @@ export const Personal = () => {
                             Add Balance
                         </Button>
                     </Box>
-                    <Box sx={{ height: 220 }}>
-                        <DataGrid
-                            rows={balanceRows}
-                            columns={balanceColumns}
-                            loading={balancesLoading || personsLoading || currenciesLoading || institutionsLoading}
-                            disableRowSelectionOnClick
-                            rowHeight={48}
-                            initialState={{ pagination: { paginationModel: { pageSize: 3 } } }}
-                            sx={{
-                                border: 'none',
-                                '& .MuiDataGrid-cell': { alignItems: 'center' },
-                                '& .MuiDataGrid-columnSeparator': { display: 'none' }
-                            }}
-                        />
+                    <Box sx={{ p: 2 }}>
+                        <Grid container spacing={2}>
+                            {(balanceRows || []).slice(0, 10).map((balance) => (
+                                <Grid key={balance.id} item xs={12} sm={6} md={4} lg={3}>
+                                    <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+                                        <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                                            <Box>
+                                                <Typography variant="subtitle2" fontWeight={600} noWrap>
+                                                    {balance.institution?.name || 'Institution'}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary" noWrap>
+                                                    {balance.currency?.symbol || '—'} · {balance.type || 'REGULAR'}
+                                                </Typography>
+                                            </Box>
+                                            <Box display="flex" alignItems="center" gap={0.5}>
+                                                <Tooltip title="Edit">
+                                                    <IconButton onClick={() => handleBalanceOpenEdit(balance)} size="small" aria-label="Edit">
+                                                        <EditOutlined fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Delete">
+                                                    <IconButton
+                                                        color="error"
+                                                        onClick={() => deleteBalance.mutate(balance.id)}
+                                                        size="small"
+                                                        aria-label="Delete"
+                                                        disabled={!activePersonId || deleteBalance.isLoading}
+                                                    >
+                                                        <DeleteOutline fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Box>
+                                        </Box>
+                                        <Box mt={2}>
+                                            <Typography variant="h6" fontWeight={700}>
+                                                {formatMoney(balance.amount)}
+                                            </Typography>
+                                        </Box>
+                                    </Paper>
+                                </Grid>
+                            ))}
+                            {!balancesLoading && (balanceRows || []).length === 0 && (
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        No balances yet. Add a balance to get started.
+                                    </Typography>
+                                </Grid>
+                            )}
+                        </Grid>
                     </Box>
                 </Paper>
             </Box>
@@ -868,6 +950,11 @@ export const Personal = () => {
                             sx={{
                                 border: 'none',
                                 '& .MuiDataGrid-cell': { alignItems: 'center' },
+                            '& .MuiDataGrid-cell.recurrent-actions-cell': {
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            },
                                 '& .MuiDataGrid-columnSeparator': { display: 'none' }
                             }}
                         />
@@ -1157,6 +1244,29 @@ export const Personal = () => {
                             </Grid>
                             <Grid item xs={12}>
                                 <Controller
+                                    name="balanceId"
+                                    control={recurrentControl}
+                                    rules={{ required: true }}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            select
+                                            label="Balance"
+                                            fullWidth
+                                            SelectProps={{ sx: { borderRadius: 2 } }}
+                                            disabled={!activePersonId || balancesLoading || !(balanceRows || []).length}
+                                        >
+                                            {(balanceRows || []).map((balance) => (
+                                                <MenuItem key={balance.id} value={balance.id}>
+                                                    {balance.institution?.name || 'Institution'} · {balance.currency?.symbol || '—'}
+                                                </MenuItem>
+                                            ))}
+                                        </TextField>
+                                    )}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Controller
                                     name="category"
                                     control={recurrentControl}
                                     render={({ field }) => (
@@ -1186,7 +1296,6 @@ export const Personal = () => {
                                             type="number"
                                             fullWidth
                                             InputProps={{
-                                                startAdornment: '$',
                                                 sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 600 }
                                             }}
                                         />

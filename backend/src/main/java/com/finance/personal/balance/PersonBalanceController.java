@@ -46,4 +46,13 @@ public class PersonBalanceController {
     ) {
         return service.sumAll(personId, baseCurrencyId, balanceType);
     }
+
+    @DeleteMapping("/{balanceId}")
+    @CheckPersonAuthority
+    public void delete(
+        @RequestParam Long personId,
+        @PathVariable Long balanceId
+    ) {
+        service.deleteBalance(personId, balanceId);
+    }
 }

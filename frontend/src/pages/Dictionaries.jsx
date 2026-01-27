@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import {
     Add,
-    MenuBook,
     CurrencyExchange,
     CorporateFare,
     ConfirmationNumber
@@ -73,7 +72,6 @@ export const Dictionaries = () => {
     const [currencyOpen, setCurrencyOpen] = useState(false);
     const [institutionOpen, setInstitutionOpen] = useState(false);
     const [symbolOpen, setSymbolOpen] = useState(false);
-    const [pairOpen, setPairOpen] = useState(false);
 
     const { data: currencies, isLoading: currenciesLoading } = useQuery({
         queryKey: ['currencies'],
@@ -87,11 +85,6 @@ export const Dictionaries = () => {
         queryKey: ['symbols'],
         queryFn: api.dictionary.symbol.list
     });
-    const { data: pairs, isLoading: pairsLoading } = useQuery({
-        queryKey: ['pairs'],
-        queryFn: api.dictionary.pair.list
-    });
-
     const createCurrency = useMutation({
         mutationFn: api.dictionary.currency.create,
         onSuccess: () => {
@@ -116,15 +109,6 @@ export const Dictionaries = () => {
             resetSymbol();
         }
     });
-    const createPair = useMutation({
-        mutationFn: api.dictionary.pair.create,
-        onSuccess: () => {
-            queryClient.invalidateQueries(['pairs']);
-            setPairOpen(false);
-            resetPair();
-        }
-    });
-
     const {
         control: currencyControl,
         handleSubmit: handleCurrencySubmit,
@@ -148,14 +132,6 @@ export const Dictionaries = () => {
     } = useForm({
         defaultValues: { symbol: '', group: SymbolGroups[0], institutionId: '' }
     });
-    const {
-        control: pairControl,
-        handleSubmit: handlePairSubmit,
-        reset: resetPair
-    } = useForm({
-        defaultValues: { baseCurrencyId: '', quoteCurrencyId: '' }
-    });
-
     const institutionMap = new Map((institutions || []).map((inst) => [inst.id, inst]));
     const currencyMap = new Map((currencies || []).map((currency) => [currency.id, currency]));
 
@@ -276,38 +252,6 @@ export const Dictionaries = () => {
         }
     ];
 
-    const pairRows = (pairs || []).map((item) => ({
-        ...item,
-        baseCurrency: currencyMap.get(item.baseCurrencyId),
-        quoteCurrency: currencyMap.get(item.quoteCurrencyId)
-    }));
-    const pairColumns = [
-        {
-            field: 'baseCurrency',
-            headerName: 'Base',
-            flex: 1,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    <Chip label={params.value?.symbol || '—'} size="small" sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }} />
-                </Box>
-            )
-        },
-        {
-            field: 'quoteCurrency',
-            headerName: 'Quote',
-            flex: 1,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    <Chip label={params.value?.symbol || '—'} size="small" sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 600 }} />
-                </Box>
-            )
-        }
-    ];
-
     return (
         <Box sx={{ pb: 5 }}>
             <Box mb={4}>
@@ -338,17 +282,6 @@ export const Dictionaries = () => {
                         rows={institutions || []}
                         columns={institutionColumns}
                         loading={institutionsLoading}
-                    />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <DictionaryCard
-                        title="Pairs"
-                        subtitle="Currency pairs"
-                        icon={<MenuBook fontSize="small" />}
-                        onAdd={() => setPairOpen(true)}
-                        rows={pairRows}
-                        columns={pairColumns}
-                        loading={pairsLoading || currenciesLoading}
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -493,54 +426,6 @@ export const Dictionaries = () => {
                 </form>
             </Dialog>
 
-            <Dialog open={pairOpen} onClose={() => setPairOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
-                <form onSubmit={handlePairSubmit((data) => createPair.mutate({
-                    baseCurrencyId: Number(data.baseCurrencyId),
-                    quoteCurrencyId: Number(data.quoteCurrencyId)
-                }))}>
-                    <DialogTitle>
-                        <Typography variant="h6" fontWeight="bold">New Pair</Typography>
-                    </DialogTitle>
-                    <DialogContent>
-                        <Box display="flex" flexDirection="column" gap={2} mt={1}>
-                            <Controller
-                                name="baseCurrencyId"
-                                control={pairControl}
-                                rules={{ required: true }}
-                                render={({ field }) => (
-                                    <TextField {...field} select label="Base Currency" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
-                                        {(currencies || []).map((currency) => (
-                                            <MenuItem key={currency.id} value={currency.id}>
-                                                {currency.symbol} — {currency.name}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
-                                )}
-                            />
-                            <Controller
-                                name="quoteCurrencyId"
-                                control={pairControl}
-                                rules={{ required: true }}
-                                render={({ field }) => (
-                                    <TextField {...field} select label="Quote Currency" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
-                                        {(currencies || []).map((currency) => (
-                                            <MenuItem key={currency.id} value={currency.id}>
-                                                {currency.symbol} — {currency.name}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
-                                )}
-                            />
-                        </Box>
-                    </DialogContent>
-                    <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={() => setPairOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
-                        <Button type="submit" variant="contained" disabled={createPair.isLoading} sx={{ borderRadius: 2, px: 3 }}>
-                            {createPair.isLoading ? 'Saving...' : 'Create'}
-                        </Button>
-                    </DialogActions>
-                </form>
-            </Dialog>
         </Box>
     );
 };

@@ -44,4 +44,13 @@ public class PersonTransactionRecurrentController {
         var transaction = mapper.toEntity(dto);
         service.save(transaction);
     }
+
+    @DeleteMapping("/{transactionId}")
+    @CheckPersonAuthority
+    public void delete(
+        @RequestParam Long personId,
+        @PathVariable Long transactionId
+    ) {
+        service.deleteTransaction(personId, transactionId);
+    }
 }

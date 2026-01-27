@@ -32,6 +32,9 @@ export const api = {
         list: (personId) => client.get('/finance/personal/transaction/recurrent', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/transaction/recurrent', data, { params: { personId } }),
         update: (personId, data) => client.put('/finance/personal/transaction/recurrent', data, { params: { personId } }),
+        delete: (personId, transactionId) => (
+            client.delete(`/finance/personal/transaction/recurrent/${transactionId}`, { params: { personId } })
+        ),
     },
     person: {
         list: () => client.get('/finance/personal/person').then(r => r.data),
@@ -40,6 +43,7 @@ export const api = {
     balance: {
         list: (personId) => client.get('/finance/personal/balance', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/balance', data, { params: { personId } }),
+        delete: (personId, balanceId) => client.delete(`/finance/personal/balance/${balanceId}`, { params: { personId } }),
         sumAll: (personId, baseCurrencyId, balanceType) => (
             client.get('/finance/personal/balance/sumAll', { params: { personId, baseCurrencyId, balanceType } })
                 .then(r => r.data)

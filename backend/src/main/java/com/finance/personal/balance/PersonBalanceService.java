@@ -84,4 +84,10 @@ public class PersonBalanceService {
 
         return total.setScale(2, RoundingMode.HALF_UP);
     }
+
+    public void deleteBalance(Long personId, Long balanceId) {
+        repo.findById(balanceId)
+            .filter(balance -> balance.getPersonId().equals(personId))
+            .ifPresent(repo::delete);
+    }
 }

@@ -15,7 +15,7 @@ const InvestTypes = ["REAL_ESTATE", "BONDS", "STOCKS_LONG", "VENTURE", "CRYPTO_H
 // FIX: Safe formatter that won't crash on null/undefined
 const formatMoney = (val) => {
     if (val == null) return '-';
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(val);
 };
 
 const dateFormatter = (dateStr) => {
@@ -36,6 +36,10 @@ export const Investments = () => {
     const { data: institutions, isLoading: institutionsLoading } = useQuery({
         queryKey: ['institutions'],
         queryFn: api.dictionary.institution.list
+    });
+    const { data: symbols, isLoading: symbolsLoading } = useQuery({
+        queryKey: ['symbols'],
+        queryFn: api.dictionary.symbol.list
     });
 
     const { data: investments, isLoading } = useQuery({
@@ -82,6 +86,7 @@ export const Investments = () => {
         const payload = {
             ...data,
             personId: activePersonId,
+            symbolId: data.symbolId ? Number(data.symbolId) : null,
             startDate: new Date(data.startDate).toISOString(),
             endDate: data.endDate ? new Date(data.endDate).toISOString() : null
         };
@@ -102,7 +107,7 @@ export const Investments = () => {
         reset({
             type: 'STOCKS_LONG',
             institutionId: institutions?.[0]?.id || '',
-            symbolId: 1,
+            symbolId: symbols?.[0]?.id || '',
             reason: '',
             amount: 0,
             startDate: new Date().toISOString().slice(0, 16),
@@ -116,7 +121,7 @@ export const Investments = () => {
         reset({
             type: row.type || 'STOCKS_LONG',
             institutionId: row.institutionId ?? institutions?.[0]?.id ?? '',
-            symbolId: row.symbolId ?? 1,
+            symbolId: row.symbolId ?? symbols?.[0]?.id ?? '',
             reason: row.reason ?? '',
             amount: row.amount ?? 0,
             startDate: formatDateTimeLocal(row.startDate),
@@ -328,63 +333,65 @@ export const Investments = () => {
                         </Typography>
                     </DialogTitle>
                     <DialogContent>
-                        <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
-                                <Controller name="type" control={control} render={({ field }) => (
-                                    <TextField {...field} select label="Asset Class" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
-                                        {InvestTypes.map((o) => <MenuItem key={o} value={o}>{o.replace(/_/g, ' ')}</MenuItem>)}
+                        <Box display="flex" flexDirection="column" gap={2} mt={1}>
+                            <Controller name="type" control={control} render={({ field }) => (
+                                <TextField {...field} select label="Asset Class" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
+                                    {InvestTypes.map((o) => <MenuItem key={o} value={o}>{o.replace(/_/g, ' ')}</MenuItem>)}
+                                </TextField>
+                            )} />
+                            <Controller
+                                name="institutionId"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Institution"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                        disabled={institutionsLoading}
+                                    >
+                                        {(institutions || []).map((institution) => (
+                                            <MenuItem key={institution.id} value={institution.id}>
+                                                {institution.name}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
-                                )} />
-                            </Grid>
-
-                            {/* IDs in a secondary row */}
-                            <Grid item xs={6}>
-                                <Controller
-                                    name="institutionId"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <TextField
-                                            {...field}
-                                            select
-                                            label="Institution"
-                                            fullWidth
-                                            SelectProps={{ sx: { borderRadius: 2 } }}
-                                            disabled={institutionsLoading}
-                                        >
-                                            {(institutions || []).map((institution) => (
-                                                <MenuItem key={institution.id} value={institution.id}>
-                                                    {institution.name}
-                                                </MenuItem>
-                                            ))}
-                                        </TextField>
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={6}><Controller name="symbolId" control={control} render={({ field }) => <TextField {...field} label="Symbol ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} /> } /></Grid>
-
-                            <Grid item xs={12}>
-                                <Controller name="amount" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Principal Amount" type="number" fullWidth InputProps={{ startAdornment: '$', sx: { borderRadius: 2, fontSize: '1.2rem', fontWeight: 600 } }} />
-                                )} />
-                            </Grid>
-
-                            <Grid item xs={6}>
-                                <Controller name="startDate" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Start Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} InputProps={{ sx: { borderRadius: 2 } }} />
-                                )} />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Controller name="endDate" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Maturity Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} helperText="Optional (for bonds/fixed term)" InputProps={{ sx: { borderRadius: 2 } }} />
-                                )} />
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <Controller name="reason" control={control} render={({ field }) => (
-                                    <TextField {...field} label="Investment Thesis" multiline rows={3} fullWidth placeholder="Rationale for this allocation..." InputProps={{ sx: { borderRadius: 2 } }} />
-                                )} />
-                            </Grid>
-                        </Grid>
+                                )}
+                            />
+                            <Controller
+                                name="symbolId"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Symbol"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                        disabled={symbolsLoading || !(symbols || []).length}
+                                    >
+                                        {(symbols || []).map((symbol) => (
+                                            <MenuItem key={symbol.id} value={symbol.id}>
+                                                {symbol.symbol}{symbol.institutionId ? ` — ${institutions?.find((i) => i.id === symbol.institutionId)?.name || 'Institution'}` : ''}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+                            <Controller name="amount" control={control} render={({ field }) => (
+                                <TextField {...field} label="Principal Amount" type="number" fullWidth InputProps={{ startAdornment: '$', sx: { borderRadius: 2, fontSize: '1.2rem', fontWeight: 600 } }} />
+                            )} />
+                            <Controller name="startDate" control={control} render={({ field }) => (
+                                <TextField {...field} label="Start Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} InputProps={{ sx: { borderRadius: 2 } }} />
+                            )} />
+                            <Controller name="endDate" control={control} render={({ field }) => (
+                                <TextField {...field} label="Maturity Date" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} helperText="Optional (for bonds/fixed term)" InputProps={{ sx: { borderRadius: 2 } }} />
+                            )} />
+                            <Controller name="reason" control={control} render={({ field }) => (
+                                <TextField {...field} label="Investment Thesis" multiline rows={3} fullWidth placeholder="Rationale for this allocation..." InputProps={{ sx: { borderRadius: 2 } }} />
+                            )} />
+                        </Box>
                     </DialogContent>
                     <DialogActions sx={{ p: 3 }}>
                         <Button onClick={() => setOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>

@@ -72,4 +72,10 @@ public class PersonTransactionRecurrentService {
     public void save(PersonTransactionRecurrent transaction) {
         personTransactionRecurrentRepo.save(transaction);
     }
+
+    public void deleteTransaction(Long personId, Long transactionId) {
+        personTransactionRecurrentRepo.findById(transactionId)
+            .filter(tx -> tx.getPersonId().equals(personId))
+            .ifPresent(personTransactionRecurrentRepo::delete);
+    }
 }
