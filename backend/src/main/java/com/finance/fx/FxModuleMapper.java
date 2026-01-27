@@ -29,7 +29,7 @@ public class FxModuleMapper {
                 pairs.get(pairId).getBaseCurrencyId(),
                 pairs.get(pairId).getQuoteCurrencyId(),
                 pairs.get(pairId).getSymbol(),
-                rate.getFxCandleType(),
+                rate.getCandleType(),
                 rate.getCandleDate(),
                 rate.getPrice()
             ));

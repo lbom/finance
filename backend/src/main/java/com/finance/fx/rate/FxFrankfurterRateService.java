@@ -60,7 +60,7 @@ public class FxFrankfurterRateService {
         FxRate fxRate = new FxRate();
         fxRate.setPairId(pair.getId());
         fxRate.setPrice(price);
-        fxRate.setFxCandleType(FxCandleType.D);
+        fxRate.setCandleType(FxCandleType.D);
         fxRate.setCandleDate(date);
         return fxRate;
     }

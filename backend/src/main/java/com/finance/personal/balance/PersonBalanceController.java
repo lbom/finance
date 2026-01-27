@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -32,8 +33,17 @@ public class PersonBalanceController {
         @RequestParam Long personId,
         @Validated @RequestBody PersonBalanceDto dto)
     {
-        userModule.hasAuthority(personId);
         var balance = mapper.toEntity(dto);
         service.save(balance);
+    }
+
+    @GetMapping("/sumAll")
+    @CheckPersonAuthority
+    public BigDecimal getSumAll(
+        @RequestParam Long personId,
+        @RequestParam Long baseCurrencyId,
+        @RequestParam PersonBalanceType balanceType
+    ) {
+        return service.sumAll(personId, baseCurrencyId, balanceType);
     }
 }

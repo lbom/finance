@@ -83,7 +83,7 @@ public class FxBinanceRateService {
 
             FxRate rate = new FxRate();
             rate.setPairId(pairId);
-            rate.setFxCandleType(FxCandleType.D);
+            rate.setCandleType(FxCandleType.D);
             rate.setPrice(closePrice);
             rate.setCandleDate(Instant.ofEpochMilli(openTimeMs)
                     .atZone(ZoneOffset.UTC)

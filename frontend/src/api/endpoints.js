@@ -32,6 +32,10 @@ export const api = {
     balance: {
         list: (personId) => client.get('/finance/personal/balance', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/balance', data, { params: { personId } }),
+        sumAll: (personId, baseCurrencyId, balanceType) => (
+            client.get('/finance/personal/balance/sumAll', { params: { personId, baseCurrencyId, balanceType } })
+                .then(r => r.data)
+        ),
     },
     dictionary: {
         currency: {
@@ -45,6 +49,10 @@ export const api = {
         symbol: {
             list: () => client.get('/finance/dictionary/symbol').then(r => r.data),
             create: (data) => client.post('/finance/dictionary/symbol', data),
+        },
+        pair: {
+            list: () => client.get('/finance/dictionary/pair').then(r => r.data),
+            create: (data) => client.post('/finance/dictionary/pair', data),
         },
     },
 };

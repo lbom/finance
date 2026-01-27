@@ -20,6 +20,7 @@ import { api } from '../api/endpoints';
 
 const ProfitTypes = ["SALARY", "BUSINESS", "INVESTMENT", "TRADE", "GIFT", "OTHER"];
 const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "OTHER"];
+const BalanceTypes = ["REGULAR", "CRYPTO"];
 
 // Safe Currency Formatter
 const formatMoney = (val) => {
@@ -229,7 +230,8 @@ export const Personal = () => {
     } = useForm({
         defaultValues: {
             currencyId: '',
-            amount: ''
+            amount: '',
+            type: 'REGULAR'
         }
     });
     const {
@@ -332,7 +334,7 @@ export const Personal = () => {
 
     const handleBalanceOpenAdd = () => {
         setBalanceEditing(null);
-        resetBalance({ currencyId: currencies?.[0]?.id || '', amount: '' });
+        resetBalance({ currencyId: currencies?.[0]?.id || '', amount: '', type: 'REGULAR' });
         setBalanceOpen(true);
     };
 
@@ -340,7 +342,8 @@ export const Personal = () => {
         setBalanceEditing(row);
         resetBalance({
             currencyId: row.currencyId ?? '',
-            amount: row.amount ?? ''
+            amount: row.amount ?? '',
+            type: row.type || 'REGULAR'
         });
         setBalanceOpen(true);
     };
@@ -351,7 +354,8 @@ export const Personal = () => {
             id: balanceEditing?.id,
             personId: activePersonId,
             currencyId: Number(data.currencyId),
-            amount: Number(data.amount)
+            amount: Number(data.amount),
+            type: data.type || 'REGULAR'
         };
         saveBalance.mutate(payload);
     };
@@ -443,6 +447,7 @@ export const Personal = () => {
     const currencyMap = new Map((currencies || []).map((c) => [c.id, c]));
     const balanceRows = (balances || []).map(item => ({
         ...item,
+        type: item.type || 'REGULAR',
         currency: currencyMap.get(item.currencyId)
     }));
     const balanceColumns = [
@@ -456,6 +461,18 @@ export const Personal = () => {
                     label={params.value?.symbol || '—'}
                     size="small"
                     sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
+                />
+            )
+        },
+        {
+            field: 'type',
+            headerName: 'Type',
+            width: 120,
+            renderCell: (params) => (
+                <Chip
+                    label={params.value}
+                    size="small"
+                    sx={{ bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', fontWeight: 600 }}
                 />
             )
         },
@@ -725,6 +742,24 @@ export const Personal = () => {
                                             sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 600 }
                                         }}
                                     />
+                                )}
+                            />
+                            <Controller
+                                name="type"
+                                control={balanceControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Type"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                    >
+                                        {BalanceTypes.map((type) => (
+                                            <MenuItem key={type} value={type}>{type}</MenuItem>
+                                        ))}
+                                    </TextField>
                                 )}
                             />
                         </Box>

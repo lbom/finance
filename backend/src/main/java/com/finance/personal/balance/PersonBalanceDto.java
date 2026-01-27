@@ -8,5 +8,6 @@ public record PersonBalanceDto(
     Long id,
     @Nonnull Long personId,
     @Nonnull Long currencyId,
-    @Nonnull BigDecimal amount
+    @Nonnull BigDecimal amount,
+    PersonBalanceType type
 ) {}

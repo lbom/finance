@@ -21,5 +21,5 @@ public class FxRate {
     private LocalDate candleDate;
 
     @Enumerated(EnumType.STRING)
-    private FxCandleType fxCandleType;
+    private FxCandleType candleType;
 }

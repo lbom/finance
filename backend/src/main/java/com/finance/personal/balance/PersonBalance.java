@@ -24,4 +24,8 @@ public class PersonBalance {
 
     @Column(name = "amount", precision = 19, scale = 2)
     private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private PersonBalanceType type;
 }

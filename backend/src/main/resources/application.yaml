@@ -2,10 +2,21 @@ spring:
   application:
     name: trades
   datasource:
-   url: jdbc:postgresql://localhost:5432/trades
-   username: 'lbom'
-   password: '123456'
-   driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/trades
+    username: 'lbom'
+    password: '123456'
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20
+fx:
+  base-url: https://api.frankfurter.dev/v1/latest
+  base-currency: USD
+fx-crypto:
+  base-url: https://api.binance.com/api/v3/klines
+
 #logging:
 #  level:
 #    org.springframework.security: DEBUG
