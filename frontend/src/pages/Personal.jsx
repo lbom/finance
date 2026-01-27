@@ -340,7 +340,8 @@ export const Personal = () => {
             category: ProfitTypes[0],
             amount: '',
             isActive: true,
-            balanceId: ''
+            balanceId: '',
+            details: ''
         }
     });
     const {
@@ -459,7 +460,8 @@ export const Personal = () => {
             category: ProfitTypes[0],
             amount: '',
             isActive: true,
-            balanceId: activeBalanceId || ''
+            balanceId: activeBalanceId || '',
+            details: ''
         });
         setRecurrentOpen(true);
     };
@@ -474,7 +476,8 @@ export const Personal = () => {
             category,
             amount: row.amount ?? '',
             isActive: !!row.isActive,
-            balanceId: row.balanceId ?? activeBalanceId ?? ''
+            balanceId: row.balanceId ?? activeBalanceId ?? '',
+            details: row.details || ''
         });
         setRecurrentOpen(true);
     };
@@ -486,6 +489,7 @@ export const Personal = () => {
             personId: activePersonId,
             balanceId: Number(data.balanceId),
             name: data.name.trim(),
+            details: data.details?.trim() || '',
             periodDays: Number(data.periodDays),
             amount: Number(data.amount),
             isActive: !!data.isActive,
@@ -549,7 +553,8 @@ export const Personal = () => {
     const recurrentRows = (recurrent || []).map(item => ({
         ...item,
         displayCategory: item.profitType || item.spendingType || 'OTHER',
-        displayBalance: balanceLabelMap.get(item.balanceId) || '—'
+        displayBalance: balanceLabelMap.get(item.balanceId) || '—',
+        displayDetails: item.details || '—'
     }));
 
     const recurrentColumns = [
@@ -580,8 +585,8 @@ export const Personal = () => {
         {
             field: 'displayCategory',
             headerName: 'Category',
-            flex: 1,
-            minWidth: 140,
+            flex: 0.9,
+            minWidth: 120,
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => (
@@ -598,7 +603,22 @@ export const Personal = () => {
             field: 'displayBalance',
             headerName: 'Balance',
             flex: 1,
-            minWidth: 180,
+            minWidth: 140,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value}
+                    </Typography>
+                </Box>
+            )
+        },
+        {
+            field: 'displayDetails',
+            headerName: 'Details',
+            flex: 1.2,
+            minWidth: 140,
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => (
@@ -651,7 +671,7 @@ export const Personal = () => {
         {
             field: 'actions',
             headerName: '',
-            width: 90,
+            width: 72,
             sortable: false,
             filterable: false,
             align: 'center',
@@ -945,7 +965,9 @@ export const Personal = () => {
                             columns={recurrentColumns}
                             loading={l3 || personsLoading || balancesLoading}
                             disableRowSelectionOnClick
-                            rowHeight={55}
+                            rowHeight={48}
+                            columnHeaderHeight={44}
+                            density="compact"
                             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
                             sx={{
                                 border: 'none',
@@ -955,7 +977,8 @@ export const Personal = () => {
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             },
-                                '& .MuiDataGrid-columnSeparator': { display: 'none' }
+                                '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                                '& .MuiDataGrid-columnHeaders': { bgcolor: 'transparent' }
                             }}
                         />
                     </Box>
@@ -1209,112 +1232,112 @@ export const Personal = () => {
                         </Typography>
                     </DialogTitle>
                     <DialogContent>
-                        <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
-                                <Controller
-                                    name="name"
-                                    control={recurrentControl}
-                                    rules={{ required: true }}
-                                    render={({ field }) => (
-                                        <TextField {...field} label="Name" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Controller
-                                    name="type"
-                                    control={recurrentControl}
-                                    render={({ field }) => (
-                                        <TextField {...field} select label="Type" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
-                                            <MenuItem value="PROFIT">PROFIT</MenuItem>
-                                            <MenuItem value="SPENDING">SPENDING</MenuItem>
-                                        </TextField>
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Controller
-                                    name="periodDays"
-                                    control={recurrentControl}
-                                    rules={{ required: true, min: 1 }}
-                                    render={({ field }) => (
-                                        <TextField {...field} label="Every (days)" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Controller
-                                    name="balanceId"
-                                    control={recurrentControl}
-                                    rules={{ required: true }}
-                                    render={({ field }) => (
-                                        <TextField
-                                            {...field}
-                                            select
-                                            label="Balance"
-                                            fullWidth
-                                            SelectProps={{ sx: { borderRadius: 2 } }}
-                                            disabled={!activePersonId || balancesLoading || !(balanceRows || []).length}
-                                        >
-                                            {(balanceRows || []).map((balance) => (
-                                                <MenuItem key={balance.id} value={balance.id}>
-                                                    {balance.institution?.name || 'Institution'} · {balance.currency?.symbol || '—'}
-                                                </MenuItem>
-                                            ))}
-                                        </TextField>
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Controller
-                                    name="category"
-                                    control={recurrentControl}
-                                    render={({ field }) => (
-                                        <TextField
-                                            {...field}
-                                            select
-                                            label="Category"
-                                            fullWidth
-                                            SelectProps={{ sx: { borderRadius: 2 } }}
-                                        >
-                                            {(recurrentType === 'SPENDING' ? SpendingTypes : ProfitTypes).map(opt => (
-                                                <MenuItem key={opt} value={opt}>{opt.replace(/_/g, ' ')}</MenuItem>
-                                            ))}
-                                        </TextField>
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Controller
-                                    name="amount"
-                                    control={recurrentControl}
-                                    rules={{ required: true, min: 0 }}
-                                    render={({ field }) => (
-                                        <TextField
-                                            {...field}
-                                            label="Amount"
-                                            type="number"
-                                            fullWidth
-                                            InputProps={{
-                                                sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 600 }
-                                            }}
-                                        />
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Controller
-                                    name="isActive"
-                                    control={recurrentControl}
-                                    render={({ field }) => (
-                                        <FormControlLabel
-                                            control={<Switch checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
-                                            label="Active"
-                                        />
-                                    )}
-                                />
-                            </Grid>
-                        </Grid>
+                        <Box display="flex" flexDirection="column" gap={2} mt={1}>
+                            <Controller
+                                name="name"
+                                control={recurrentControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField {...field} label="Name" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />
+                                )}
+                            />
+                            <Controller
+                                name="type"
+                                control={recurrentControl}
+                                render={({ field }) => (
+                                    <TextField {...field} select label="Type" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
+                                        <MenuItem value="PROFIT">PROFIT</MenuItem>
+                                        <MenuItem value="SPENDING">SPENDING</MenuItem>
+                                    </TextField>
+                                )}
+                            />
+                            <Controller
+                                name="periodDays"
+                                control={recurrentControl}
+                                rules={{ required: true, min: 1 }}
+                                render={({ field }) => (
+                                    <TextField {...field} label="Every (days)" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />
+                                )}
+                            />
+                            <Controller
+                                name="balanceId"
+                                control={recurrentControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Balance"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                        disabled={!activePersonId || balancesLoading || !(balanceRows || []).length}
+                                    >
+                                        {(balanceRows || []).map((balance) => (
+                                            <MenuItem key={balance.id} value={balance.id}>
+                                                {balance.institution?.name || 'Institution'} · {balance.currency?.symbol || '—'}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+                            <Controller
+                                name="category"
+                                control={recurrentControl}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Category"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                    >
+                                        {(recurrentType === 'SPENDING' ? SpendingTypes : ProfitTypes).map(opt => (
+                                            <MenuItem key={opt} value={opt}>{opt.replace(/_/g, ' ')}</MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+                            <Controller
+                                name="amount"
+                                control={recurrentControl}
+                                rules={{ required: true, min: 0 }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Amount"
+                                        type="number"
+                                        fullWidth
+                                        InputProps={{
+                                            sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 600 }
+                                        }}
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name="details"
+                                control={recurrentControl}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Details"
+                                        fullWidth
+                                        multiline
+                                        minRows={2}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name="isActive"
+                                control={recurrentControl}
+                                render={({ field }) => (
+                                    <FormControlLabel
+                                        control={<Switch checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
+                                        label="Active"
+                                    />
+                                )}
+                            />
+                        </Box>
                     </DialogContent>
                     <DialogActions sx={{ p: 3 }}>
                         <Button onClick={handleRecurrentClose} sx={{ color: 'text.secondary' }}>Cancel</Button>

@@ -12,6 +12,7 @@ public record PersonTransactionRecurrentDto(
     @Nonnull Long personId,
     @Nonnull Integer periodDays,
     @Nonnull String name,
+    String details,
     boolean isActive,
     @Nonnull Long balanceId,
     @Nonnull BigDecimal amount,

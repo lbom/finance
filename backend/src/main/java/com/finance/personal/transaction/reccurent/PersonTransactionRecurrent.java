@@ -38,6 +38,9 @@ public class PersonTransactionRecurrent {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "details")
+    private String details;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 

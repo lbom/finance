@@ -56,7 +56,9 @@ public class PersonTransactionRecurrentService {
                 recurrentTransaction.getType(),
                 recurrentTransaction.getProfitType(),
                 recurrentTransaction.getSpendingType(),
-                recurrentTransaction.getName(),
+                recurrentTransaction.getDetails() != null && !recurrentTransaction.getDetails().isBlank()
+                    ? recurrentTransaction.getDetails()
+                    : recurrentTransaction.getName(),
                 java.time.LocalDate.now()
             );
 
