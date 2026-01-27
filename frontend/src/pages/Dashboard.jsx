@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Grid, Paper, Typography, Box, Chip } from '@mui/material';
 import { api } from '../api/endpoints.js';
 
-const StatCard = ({ title, value, isLoading }) => {
-    const displayValue = value == null ? '—' : `$${Number(value).toLocaleString()}`;
+const StatCard = ({ title, value, isLoading, color = 'primary.main' }) => {
+    const displayValue = value == null ? '—' : `${Number(value).toLocaleString()}`;
     return (
         <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <Typography variant="subtitle1" color="text.secondary">{title}</Typography>
-            <Typography variant="h3" color="primary.main">{isLoading ? '...' : displayValue}</Typography>
+            <Typography variant="h3" color={color}>{isLoading ? '...' : displayValue}</Typography>
         </Paper>
     );
 };
@@ -53,6 +53,11 @@ export const Dashboard = () => {
         queryFn: () => api.balance.sumAll(activePersonId, usdtCurrencyId, 'CRYPTO'),
         enabled: !!activePersonId && !!usdtCurrencyId,
     });
+    const { data: subscriptionsTotal, isLoading: subscriptionsLoading } = useQuery({
+        queryKey: ['recurrent', activePersonId, 'sumSubscriptions'],
+        queryFn: () => api.recurrent.sumSubscriptions(activePersonId),
+        enabled: !!activePersonId,
+    });
 
     return (
         <Box>
@@ -62,6 +67,7 @@ export const Dashboard = () => {
                 <Grid item xs={12} md={6}><StatCard title="Investment Returns" value={investProfit} isLoading={l2 || personsLoading} /></Grid>
                 <Grid item xs={12} md={6}><StatCard title="Total Balances (USD)" value={totalUsd} isLoading={totalUsdLoading || personsLoading} /></Grid>
                 <Grid item xs={12} md={6}><StatCard title="Total Balances (USDT)" value={totalUsdt} isLoading={totalUsdtLoading || personsLoading} /></Grid>
+                <Grid item xs={12} md={6}><StatCard title="Monthly Subscriptions" value={subscriptionsTotal} isLoading={subscriptionsLoading || personsLoading} color="error.main" /></Grid>
                 <Grid item xs={12}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="subtitle1" color="text.secondary">Balances</Typography>

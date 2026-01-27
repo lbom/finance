@@ -9,5 +9,9 @@ public interface PersonTransactionRecurrentRepo extends JpaRepository<PersonTran
         Long personId
     );
 
+    List<PersonTransactionRecurrent> getPersonTransactionRecurrentByPersonIdAndIsActiveTrue(
+        Long personId
+    );
+
     List<PersonTransactionRecurrent> getPersonTransactionRecurrentByIsActiveTrue();
 }

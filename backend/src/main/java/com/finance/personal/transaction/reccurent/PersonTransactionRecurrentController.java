@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -23,6 +24,14 @@ public class PersonTransactionRecurrentController {
     ) {
         var transactions = service.getTransactionsByPersonId(personId);
         return mapper.toDto(transactions);
+    }
+
+    @GetMapping("/sumSubscriptions")
+    @CheckPersonAuthority
+    public BigDecimal getSubscriptionsSumAverageMonthly(
+        @RequestParam Long personId
+    ) {
+        return service.sumActiveSubscriptionsAverageMonthly(personId);
     }
 
     @PostMapping

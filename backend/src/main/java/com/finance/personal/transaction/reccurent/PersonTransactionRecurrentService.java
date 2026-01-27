@@ -1,6 +1,7 @@
 package com.finance.personal.transaction.reccurent;
 
 import com.finance.personal.balance.PersonBalanceService;
+import com.finance.personal.transaction.PersonSpendingType;
 import com.finance.personal.transaction.PersonTransactionService;
 import com.finance.personal.transaction.PersonTransactionType;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,6 +36,30 @@ public class PersonTransactionRecurrentService {
 
     public List<PersonTransactionRecurrent> getTransactionsByPersonId(Long personId) {
         return personTransactionRecurrentRepo.getPersonTransactionRecurrentByPersonId(personId);
+    }
+
+    public BigDecimal sumActiveSubscriptionsAverageMonthly(Long personId) {
+        var transactions = personTransactionRecurrentRepo
+            .getPersonTransactionRecurrentByPersonIdAndIsActiveTrue(personId);
+        if (transactions == null || transactions.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (var transaction : transactions) {
+            if (transaction.getAmount() == null) continue;
+            if (transaction.getPeriodDays() == null || transaction.getPeriodDays() <= 0) continue;
+            if (transaction.getSpendingType() != PersonSpendingType.SUBSCRIPTION) continue;
+            if (transaction.getType() != PersonTransactionType.SPENDING) continue;
+
+            var periodDays = BigDecimal.valueOf(transaction.getPeriodDays());
+            var monthlyAverage = transaction.getAmount()
+                .multiply(BigDecimal.valueOf(30))
+                .divide(periodDays, 8, RoundingMode.HALF_UP);
+            total = total.add(monthlyAverage);
+        }
+
+        return total.setScale(2, RoundingMode.HALF_UP);
     }
 
     @Scheduled(cron = "0 0 0 * * *")

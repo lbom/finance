@@ -30,6 +30,10 @@ export const api = {
     },
     recurrent: {
         list: (personId) => client.get('/finance/personal/transaction/recurrent', { params: { personId } }).then(r => r.data),
+        sumSubscriptions: (personId) => (
+            client.get('/finance/personal/transaction/recurrent/sumSubscriptions', { params: { personId } })
+                .then(r => r.data)
+        ),
         create: (personId, data) => client.post('/finance/personal/transaction/recurrent', data, { params: { personId } }),
         update: (personId, data) => client.put('/finance/personal/transaction/recurrent', data, { params: { personId } }),
         delete: (personId, transactionId) => (
