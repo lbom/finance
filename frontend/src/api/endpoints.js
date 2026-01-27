@@ -10,15 +10,18 @@ export const api = {
         list: (personId) => client.get('/finance/personal/trades', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/trades', data, { params: { personId } }),
         profit: (personId) => client.get('/finance/personal/trades/profit', { params: { personId } }).then(r => r.data),
+        delete: (personId, tradeId) => client.delete(`/finance/personal/trades/${tradeId}`, { params: { personId } }),
     },
     invest: {
         list: (personId) => client.get('/finance/personal/invest', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/invest', data, { params: { personId } }),
         profit: (personId) => client.get('/finance/personal/invest/profit', { params: { personId } }).then(r => r.data),
+        delete: (personId, investId) => client.delete(`/finance/personal/invest/${investId}`, { params: { personId } }),
     },
     personal: {
         list: (personId, type) => client.get('/finance/personal/transaction', { params: { personId, type } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/transaction', data, { params: { personId } }),
+        delete: (personId, transactionId) => client.delete(`/finance/personal/transaction/${transactionId}`, { params: { personId } }),
     },
     recurrent: {
         list: (personId) => client.get('/finance/personal/transaction/recurrent', { params: { personId } }).then(r => r.data),

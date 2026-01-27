@@ -27,4 +27,10 @@ public class InvestService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    public void deleteInvest(Long personId, Long investId) {
+        investRepo.findById(investId)
+            .filter(invest -> invest.getPersonId().equals(personId))
+            .ifPresent(investRepo::delete);
+    }
 }

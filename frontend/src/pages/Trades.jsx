@@ -5,7 +5,7 @@ import {
     DialogActions, TextField, MenuItem, Grid, Chip, Paper, Avatar
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, TrendingUp, TrendingDown, HourglassEmpty, ShowChart, CandlestickChart } from '@mui/icons-material';
+import { Add, TrendingUp, TrendingDown, HourglassEmpty, ShowChart, CandlestickChart, Delete } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints.js';
 
@@ -43,6 +43,12 @@ export const Trades = () => {
             queryClient.invalidateQueries(['trades', activePersonId]);
             setOpen(false);
             reset();
+        },
+    });
+    const deleteMutation = useMutation({
+        mutationFn: (tradeId) => api.trades.delete(activePersonId, tradeId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['trades', activePersonId]);
         },
     });
 
@@ -133,6 +139,24 @@ export const Trades = () => {
                 </Typography>
             )
         },
+        {
+            field: 'actions',
+            headerName: '',
+            width: 120,
+            sortable: false,
+            filterable: false,
+            renderCell: (params) => (
+                <Button
+                    size="small"
+                    color="error"
+                    startIcon={<Delete fontSize="small" />}
+                    onClick={() => deleteMutation.mutate(params.row.id)}
+                    disabled={!activePersonId || deleteMutation.isLoading}
+                >
+                    Delete
+                </Button>
+            )
+        }
     ];
 
     return (

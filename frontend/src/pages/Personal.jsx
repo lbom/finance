@@ -29,7 +29,7 @@ const formatMoney = (val) => {
 };
 
 // --- Reusable Section Component ---
-const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disableAdd }) => {
+const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disableAdd, onDelete }) => {
 
     // Determine Styles based on Type (Income vs Expense)
     const isIncome = type === 'income';
@@ -78,6 +78,20 @@ const FinanceSection = ({ title, subtitle, data, isLoading, onAdd, type, disable
             )
         },
     ];
+    if (onDelete) {
+        columns.push({
+            field: 'actions',
+            headerName: '',
+            width: 120,
+            sortable: false,
+            filterable: false,
+            renderCell: (params) => (
+                <Button size="small" color="error" onClick={() => onDelete(params.row)}>
+                    Delete
+                </Button>
+            )
+        });
+    }
 
     return (
         <Paper sx={{ p: 0, height: '100%', borderRadius: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -174,6 +188,14 @@ export const Personal = () => {
             // Invalidate specifically the type we just added
             queryClient.invalidateQueries(['personal', activePersonId, variables.type]);
             handleClose();
+        }
+    });
+    const deleteTransaction = useMutation({
+        mutationFn: (transactionId) => api.personal.delete(activePersonId, transactionId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
+            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
+            queryClient.invalidateQueries(['balances', activePersonId]);
         }
     });
     const saveRecurrent = useMutation({
@@ -591,6 +613,7 @@ export const Personal = () => {
                         data={profits}
                         isLoading={l1 || personsLoading || balancesLoading}
                         onAdd={() => handleOpen('PROFIT')}
+                        onDelete={(row) => deleteTransaction.mutate(row.id)}
                         disableAdd={!canTransact}
                     />
                 </Box>
@@ -603,6 +626,7 @@ export const Personal = () => {
                         data={spendings}
                         isLoading={l2 || personsLoading || balancesLoading}
                         onAdd={() => handleOpen('SPENDING')}
+                        onDelete={(row) => deleteTransaction.mutate(row.id)}
                         disableAdd={!canTransact}
                     />
                 </Box>

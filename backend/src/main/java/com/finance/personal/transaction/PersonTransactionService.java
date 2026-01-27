@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -41,7 +42,7 @@ public class PersonTransactionService {
         PersonProfitType profitType,
         PersonSpendingType spendingType,
         String details,
-        java.time.LocalDate localDate)
+        LocalDate localDate)
     {
         var personTransaction = new PersonTransaction();
         personTransaction.setPersonId(personId);
@@ -53,5 +54,16 @@ public class PersonTransactionService {
         personTransaction.setDetails(details);
         personTransaction.setLocalDate(localDate);
         repository.save(personTransaction);
+    }
+
+    @Transactional
+    public void deleteTransaction(Long personId, Long transactionId) {
+        repository.findById(transactionId)
+            .filter(tx -> tx.getPersonId().equals(personId))
+            .ifPresent(tx -> {
+                repository.delete(tx);
+                boolean isSubtract = tx.getType() != PersonTransactionType.SPENDING;
+                personBalanceService.update(tx.getBalanceId(), tx.getAmount(), isSubtract);
+            });
     }
 }

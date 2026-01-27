@@ -37,4 +37,14 @@ public class PersonTransactionController {
         var transaction = mapper.toEntity(dto);
         service.save(transaction);
     }
+
+    @DeleteMapping("/{transactionId}")
+    @CheckPersonAuthority
+    public void delete(
+        @RequestParam Long personId,
+        @PathVariable Long transactionId
+    ) {
+        userModule.hasAuthority(personId);
+        service.deleteTransaction(personId, transactionId);
+    }
 }

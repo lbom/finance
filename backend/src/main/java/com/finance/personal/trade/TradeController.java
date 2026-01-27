@@ -46,4 +46,14 @@ public class TradeController {
         var trades = tradeService.getTrades(personId);
         return tradeService.calcProfit(trades);
     }
+
+    @DeleteMapping("/{tradeId}")
+    @CheckPersonAuthority
+    public void deleteTrade(
+        @RequestParam Long personId,
+        @PathVariable Long tradeId
+    ) {
+        userModule.hasAuthority(personId);
+        tradeService.deleteTrade(personId, tradeId);
+    }
 }

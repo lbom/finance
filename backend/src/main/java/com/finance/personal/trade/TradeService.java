@@ -27,4 +27,10 @@ public class TradeService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    public void deleteTrade(Long personId, Long tradeId) {
+        tradeRepo.findById(tradeId)
+            .filter(trade -> trade.getPersonId().equals(personId))
+            .ifPresent(tradeRepo::delete);
+    }
 }

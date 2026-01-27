@@ -39,4 +39,13 @@ public class InvestController {
         var invests = investService.getPersonInvests(personId);
         return investService.calcProfit(invests);
     }
+
+    @DeleteMapping("/{investId}")
+    @CheckPersonAuthority
+    public void deleteInvest(
+        @RequestParam Long personId,
+        @PathVariable Long investId
+    ) {
+        investService.deleteInvest(personId, investId);
+    }
 }

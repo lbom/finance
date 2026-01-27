@@ -5,7 +5,7 @@ import {
     DialogActions, TextField, MenuItem, Grid, Chip, Tooltip, Paper, Avatar
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, TrendingUp, TrendingDown, AccessTime, Savings, PieChart, AccountBalance } from '@mui/icons-material';
+import { Add, TrendingUp, TrendingDown, AccessTime, Savings, PieChart, AccountBalance, Delete } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
@@ -43,6 +43,12 @@ export const Investments = () => {
             queryClient.invalidateQueries(['investments', activePersonId]);
             setOpen(false);
             reset();
+        },
+    });
+    const deleteMutation = useMutation({
+        mutationFn: (investId) => api.invest.delete(activePersonId, investId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['investments', activePersonId]);
         },
     });
 
@@ -158,6 +164,24 @@ export const Investments = () => {
                 </Typography>
             )
         },
+        {
+            field: 'actions',
+            headerName: '',
+            width: 120,
+            sortable: false,
+            filterable: false,
+            renderCell: (params) => (
+                <Button
+                    size="small"
+                    color="error"
+                    startIcon={<Delete fontSize="small" />}
+                    onClick={() => deleteMutation.mutate(params.row.id)}
+                    disabled={!activePersonId || deleteMutation.isLoading}
+                >
+                    Delete
+                </Button>
+            )
+        }
     ];
 
     return (
