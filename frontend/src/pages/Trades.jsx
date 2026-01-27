@@ -26,10 +26,16 @@ const dateFormatter = (dateStr) => {
 
 export const Trades = () => {
     const [open, setOpen] = useState(false);
+    const [editingTrade, setEditingTrade] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: persons, isLoading: personsLoading } = useQuery({ queryKey: ['persons'], queryFn: api.person.list });
     const activePersonId = persons?.[0]?.id;
+
+    const { data: institutions, isLoading: institutionsLoading } = useQuery({
+        queryKey: ['institutions'],
+        queryFn: api.dictionary.institution.list
+    });
 
     const { data: trades, isLoading } = useQuery({
         queryKey: ['trades', activePersonId],
@@ -42,6 +48,16 @@ export const Trades = () => {
         onSuccess: () => {
             queryClient.invalidateQueries(['trades', activePersonId]);
             setOpen(false);
+            setEditingTrade(null);
+            reset();
+        },
+    });
+    const updateMutation = useMutation({
+        mutationFn: (data) => api.trades.update(activePersonId, data.id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['trades', activePersonId]);
+            setOpen(false);
+            setEditingTrade(null);
             reset();
         },
     });
@@ -54,14 +70,47 @@ export const Trades = () => {
 
     const { control, handleSubmit, reset } = useForm({
         defaultValues: {
-            type: 'STRAIGHT_FINANCIAL', institutionId: 1, symbolId: 1, reason: '', amount: 0,
+            type: 'STRAIGHT_FINANCIAL', institutionId: '', symbolId: 1, reason: '', amount: 0,
             startDate: new Date().toISOString(), endDate: new Date().toISOString(),
         }
     });
 
     const onSubmit = (data) => {
         if (!activePersonId) return;
-        mutation.mutate({ ...data, personId: activePersonId });
+        const payload = { ...data, personId: activePersonId };
+        if (editingTrade?.id) {
+            updateMutation.mutate({ ...payload, id: editingTrade.id });
+            return;
+        }
+        mutation.mutate(payload);
+    };
+
+    const handleOpenAdd = () => {
+        setEditingTrade(null);
+        reset({
+            type: 'STRAIGHT_FINANCIAL',
+            institutionId: institutions?.[0]?.id || '',
+            symbolId: 1,
+            reason: '',
+            amount: 0,
+            startDate: new Date().toISOString(),
+            endDate: new Date().toISOString()
+        });
+        setOpen(true);
+    };
+
+    const handleOpenEdit = (row) => {
+        setEditingTrade(row);
+        reset({
+            type: row.type || 'STRAIGHT_FINANCIAL',
+            institutionId: row.institutionId ?? institutions?.[0]?.id ?? '',
+            symbolId: row.symbolId ?? 1,
+            reason: row.reason ?? '',
+            amount: row.amount ?? 0,
+            startDate: row.startDate || new Date().toISOString(),
+            endDate: row.endDate ?? null
+        });
+        setOpen(true);
     };
 
     const columns = [
@@ -133,28 +182,37 @@ export const Trades = () => {
             headerName: 'Thesis / Reason',
             flex: 1,
             minWidth: 250,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
-                <Typography variant="body2" color="text.secondary" noWrap sx={{ py: 1.5 }}>
-                    {params.value}
-                </Typography>
+                <Box sx={{ width: '100%', textAlign: 'center', py: 1.5 }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value}
+                    </Typography>
+                </Box>
             )
         },
         {
             field: 'actions',
             headerName: '',
-            width: 120,
+            width: 170,
             sortable: false,
             filterable: false,
             renderCell: (params) => (
-                <Button
-                    size="small"
-                    color="error"
-                    startIcon={<Delete fontSize="small" />}
-                    onClick={() => deleteMutation.mutate(params.row.id)}
-                    disabled={!activePersonId || deleteMutation.isLoading}
-                >
-                    Delete
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" onClick={() => handleOpenEdit(params.row)}>
+                        Edit
+                    </Button>
+                    <Button
+                        size="small"
+                        color="error"
+                        startIcon={<Delete fontSize="small" />}
+                        onClick={() => deleteMutation.mutate(params.row.id)}
+                        disabled={!activePersonId || deleteMutation.isLoading}
+                    >
+                        Delete
+                    </Button>
+                </Box>
             )
         }
     ];
@@ -182,7 +240,7 @@ export const Trades = () => {
                     <Button
                         variant="contained"
                         startIcon={<Add />}
-                        onClick={() => setOpen(true)}
+                        onClick={handleOpenAdd}
                         disabled={!activePersonId}
                         sx={{ borderRadius: 3, px: 3 }}
                     >
@@ -216,8 +274,12 @@ export const Trades = () => {
             <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <DialogTitle sx={{ pb: 1 }}>
-                        <Typography variant="h6" fontWeight="bold">Log New Trade</Typography>
-                        <Typography variant="body2" color="text.secondary">Enter details for a new market position.</Typography>
+                        <Typography variant="h6" fontWeight="bold">
+                            {editingTrade ? 'Edit Trade' : 'Log New Trade'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {editingTrade ? 'Update trade details.' : 'Enter details for a new market position.'}
+                        </Typography>
                     </DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -229,7 +291,28 @@ export const Trades = () => {
                                 )} />
                             </Grid>
 
-                            <Grid item xs={6}><Controller name="institutionId" control={control} render={({ field }) => <TextField {...field} label="Inst ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />} /></Grid>
+                            <Grid item xs={6}>
+                                <Controller
+                                    name="institutionId"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            select
+                                            label="Institution"
+                                            fullWidth
+                                            SelectProps={{ sx: { borderRadius: 2 } }}
+                                            disabled={institutionsLoading}
+                                        >
+                                            {(institutions || []).map((institution) => (
+                                                <MenuItem key={institution.id} value={institution.id}>
+                                                    {institution.name}
+                                                </MenuItem>
+                                            ))}
+                                        </TextField>
+                                    )}
+                                />
+                            </Grid>
                             <Grid item xs={6}><Controller name="symbolId" control={control} render={({ field }) => <TextField {...field} label="Sym ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} />} /></Grid>
 
                             <Grid item xs={12}>
@@ -247,7 +330,14 @@ export const Trades = () => {
                     </DialogContent>
                     <DialogActions sx={{ p: 3 }}>
                         <Button onClick={() => setOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
-                        <Button type="submit" variant="contained" sx={{ px: 4, borderRadius: 3 }}>Save</Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            sx={{ px: 4, borderRadius: 3 }}
+                            disabled={mutation.isLoading || updateMutation.isLoading}
+                        >
+                            {editingTrade ? 'Update' : 'Save'}
+                        </Button>
                     </DialogActions>
                 </form>
             </Dialog>

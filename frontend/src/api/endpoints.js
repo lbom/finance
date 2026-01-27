@@ -9,12 +9,14 @@ export const api = {
     trades: {
         list: (personId) => client.get('/finance/personal/trades', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/trades', data, { params: { personId } }),
+        update: (personId, tradeId, data) => client.put(`/finance/personal/trades/${tradeId}`, data, { params: { personId } }),
         profit: (personId) => client.get('/finance/personal/trades/profit', { params: { personId } }).then(r => r.data),
         delete: (personId, tradeId) => client.delete(`/finance/personal/trades/${tradeId}`, { params: { personId } }),
     },
     invest: {
         list: (personId) => client.get('/finance/personal/invest', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/invest', data, { params: { personId } }),
+        update: (personId, investId, data) => client.put(`/finance/personal/invest/${investId}`, data, { params: { personId } }),
         profit: (personId) => client.get('/finance/personal/invest/profit', { params: { personId } }).then(r => r.data),
         delete: (personId, investId) => client.delete(`/finance/personal/invest/${investId}`, { params: { personId } }),
     },

@@ -39,6 +39,17 @@ public class TradeController {
         tradeService.addTrade(trades);
     }
 
+    @PutMapping("/{tradeId}")
+    @CheckPersonAuthority
+    public void updateTrade(
+        @RequestParam Long personId,
+        @PathVariable Long tradeId,
+        @Validated @RequestBody TradeDto tradeDto
+    ) {
+        userModule.hasAuthority(personId);
+        tradeService.updateTrade(personId, tradeId, tradeDto);
+    }
+
     @GetMapping("/profit")
     @CheckPersonAuthority
     public BigDecimal getProfit(@RequestParam Long personId) {

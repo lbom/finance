@@ -28,6 +28,24 @@ public class InvestService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public void updateInvest(Long personId, Long investId, InvestDto investDto) {
+        investRepo.findById(investId)
+            .filter(invest -> invest.getPersonId().equals(personId))
+            .ifPresent(invest -> {
+                if (investDto.type() != null) {
+                    invest.setType(investDto.type().name());
+                }
+                invest.setInstitutionId(investDto.institutionId());
+                invest.setSymbolId(investDto.symbolId());
+                invest.setReason(investDto.reason());
+                invest.setAmount(investDto.amount());
+                invest.setProfit(investDto.profit());
+                invest.setStartDate(investDto.startDate());
+                invest.setEndDate(investDto.endDate());
+                investRepo.save(invest);
+            });
+    }
+
     public void deleteInvest(Long personId, Long investId) {
         investRepo.findById(investId)
             .filter(invest -> invest.getPersonId().equals(personId))

@@ -19,6 +19,9 @@ public class PersonBalance {
     @Column(name = "person_id", nullable = false)
     private Long personId;
 
+    @Column(name = "institution_id", nullable = false)
+    private Long institutionId;
+
     @Column(name = "currency_id")
     private Long currencyId;
 

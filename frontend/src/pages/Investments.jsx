@@ -26,10 +26,16 @@ const dateFormatter = (dateStr) => {
 
 export const Investments = () => {
     const [open, setOpen] = useState(false);
+    const [editingInvestment, setEditingInvestment] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: persons, isLoading: personsLoading } = useQuery({ queryKey: ['persons'], queryFn: api.person.list });
     const activePersonId = persons?.[0]?.id;
+
+    const { data: institutions, isLoading: institutionsLoading } = useQuery({
+        queryKey: ['institutions'],
+        queryFn: api.dictionary.institution.list
+    });
 
     const { data: investments, isLoading } = useQuery({
         queryKey: ['investments', activePersonId],
@@ -42,6 +48,16 @@ export const Investments = () => {
         onSuccess: () => {
             queryClient.invalidateQueries(['investments', activePersonId]);
             setOpen(false);
+            setEditingInvestment(null);
+            reset();
+        },
+    });
+    const updateMutation = useMutation({
+        mutationFn: (data) => api.invest.update(activePersonId, data.id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['investments', activePersonId]);
+            setOpen(false);
+            setEditingInvestment(null);
             reset();
         },
     });
@@ -54,7 +70,7 @@ export const Investments = () => {
 
     const { control, handleSubmit, reset } = useForm({
         defaultValues: {
-            type: 'STOCKS_LONG', institutionId: 1, symbolId: 1, reason: '', amount: 0,
+            type: 'STOCKS_LONG', institutionId: '', symbolId: 1, reason: '', amount: 0,
             startDate: new Date().toISOString().slice(0, 16),
             endDate: ''
         }
@@ -68,7 +84,44 @@ export const Investments = () => {
             startDate: new Date(data.startDate).toISOString(),
             endDate: data.endDate ? new Date(data.endDate).toISOString() : null
         };
+        if (editingInvestment?.id) {
+            updateMutation.mutate({ ...payload, id: editingInvestment.id });
+            return;
+        }
         mutation.mutate(payload);
+    };
+
+    const formatDateTimeLocal = (value) => {
+        if (!value) return '';
+        return new Date(value).toISOString().slice(0, 16);
+    };
+
+    const handleOpenAdd = () => {
+        setEditingInvestment(null);
+        reset({
+            type: 'STOCKS_LONG',
+            institutionId: institutions?.[0]?.id || '',
+            symbolId: 1,
+            reason: '',
+            amount: 0,
+            startDate: new Date().toISOString().slice(0, 16),
+            endDate: ''
+        });
+        setOpen(true);
+    };
+
+    const handleOpenEdit = (row) => {
+        setEditingInvestment(row);
+        reset({
+            type: row.type || 'STOCKS_LONG',
+            institutionId: row.institutionId ?? institutions?.[0]?.id ?? '',
+            symbolId: row.symbolId ?? 1,
+            reason: row.reason ?? '',
+            amount: row.amount ?? 0,
+            startDate: formatDateTimeLocal(row.startDate),
+            endDate: formatDateTimeLocal(row.endDate)
+        });
+        setOpen(true);
     };
 
     const columns = [
@@ -167,19 +220,24 @@ export const Investments = () => {
         {
             field: 'actions',
             headerName: '',
-            width: 120,
+            width: 170,
             sortable: false,
             filterable: false,
             renderCell: (params) => (
-                <Button
-                    size="small"
-                    color="error"
-                    startIcon={<Delete fontSize="small" />}
-                    onClick={() => deleteMutation.mutate(params.row.id)}
-                    disabled={!activePersonId || deleteMutation.isLoading}
-                >
-                    Delete
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" onClick={() => handleOpenEdit(params.row)}>
+                        Edit
+                    </Button>
+                    <Button
+                        size="small"
+                        color="error"
+                        startIcon={<Delete fontSize="small" />}
+                        onClick={() => deleteMutation.mutate(params.row.id)}
+                        disabled={!activePersonId || deleteMutation.isLoading}
+                    >
+                        Delete
+                    </Button>
+                </Box>
             )
         }
     ];
@@ -205,7 +263,7 @@ export const Investments = () => {
                     <Button
                         variant="contained"
                         startIcon={<Add />}
-                        onClick={() => setOpen(true)}
+                        onClick={handleOpenAdd}
                         disabled={!activePersonId}
                         sx={{ borderRadius: 3, px: 3 }}
                     >
@@ -240,8 +298,12 @@ export const Investments = () => {
             <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <DialogTitle sx={{ pb: 1 }}>
-                        <Typography variant="h6" fontWeight="bold">New Investment</Typography>
-                        <Typography variant="body2" color="text.secondary">Commit capital to a new long-term position.</Typography>
+                        <Typography variant="h6" fontWeight="bold">
+                            {editingInvestment ? 'Edit Investment' : 'New Investment'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {editingInvestment ? 'Update investment details.' : 'Commit capital to a new long-term position.'}
+                        </Typography>
                     </DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -254,7 +316,28 @@ export const Investments = () => {
                             </Grid>
 
                             {/* IDs in a secondary row */}
-                            <Grid item xs={6}><Controller name="institutionId" control={control} render={({ field }) => <TextField {...field} label="Institution ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} /> } /></Grid>
+                            <Grid item xs={6}>
+                                <Controller
+                                    name="institutionId"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            select
+                                            label="Institution"
+                                            fullWidth
+                                            SelectProps={{ sx: { borderRadius: 2 } }}
+                                            disabled={institutionsLoading}
+                                        >
+                                            {(institutions || []).map((institution) => (
+                                                <MenuItem key={institution.id} value={institution.id}>
+                                                    {institution.name}
+                                                </MenuItem>
+                                            ))}
+                                        </TextField>
+                                    )}
+                                />
+                            </Grid>
                             <Grid item xs={6}><Controller name="symbolId" control={control} render={({ field }) => <TextField {...field} label="Symbol ID" type="number" fullWidth InputProps={{ sx: { borderRadius: 2 } }} /> } /></Grid>
 
                             <Grid item xs={12}>
@@ -283,7 +366,14 @@ export const Investments = () => {
                     </DialogContent>
                     <DialogActions sx={{ p: 3 }}>
                         <Button onClick={() => setOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
-                        <Button type="submit" variant="contained" sx={{ px: 4, borderRadius: 3 }}>Commit</Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            sx={{ px: 4, borderRadius: 3 }}
+                            disabled={mutation.isLoading || updateMutation.isLoading}
+                        >
+                            {editingInvestment ? 'Update' : 'Commit'}
+                        </Button>
                     </DialogActions>
                 </form>
             </Dialog>

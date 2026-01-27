@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 public record PersonBalanceDto(
     Long id,
     @Nonnull Long personId,
+    @Nonnull Long institutionId,
     @Nonnull Long currencyId,
     @Nonnull BigDecimal amount,
     PersonBalanceType type

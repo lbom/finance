@@ -26,7 +26,7 @@ public class PersonTransaction {
     @Column(name = "date", nullable = false)
     private LocalDate localDate;
 
-    @Column(name = "details", nullable = false)
+    @Column(name = "details")
     private String details;
 
     @Enumerated(EnumType.STRING)

@@ -28,6 +28,22 @@ public class TradeService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public void updateTrade(Long personId, Long tradeId, TradeDto tradeDto) {
+        tradeRepo.findById(tradeId)
+            .filter(trade -> trade.getPersonId().equals(personId))
+            .ifPresent(trade -> {
+                trade.setType(tradeDto.type().name());
+                trade.setInstitutionId(tradeDto.institutionId());
+                trade.setSymbolId(tradeDto.symbolId());
+                trade.setReason(tradeDto.reason());
+                trade.setAmount(tradeDto.amount());
+                trade.setProfit(tradeDto.profit());
+                trade.setStartDate(tradeDto.startDate());
+                trade.setEndDate(tradeDto.endDate());
+                tradeRepo.save(trade);
+            });
+    }
+
     public void deleteTrade(Long personId, Long tradeId) {
         tradeRepo.findById(tradeId)
             .filter(trade -> trade.getPersonId().equals(personId))

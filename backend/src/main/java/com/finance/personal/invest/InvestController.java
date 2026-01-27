@@ -33,6 +33,16 @@ public class InvestController {
         investService.addInvest(invest);
     }
 
+    @PutMapping("/{investId}")
+    @CheckPersonAuthority
+    public void updateInvest(
+        @RequestParam Long personId,
+        @PathVariable Long investId,
+        @Validated @RequestBody InvestDto investDto
+    ) {
+        investService.updateInvest(personId, investId, investDto);
+    }
+
     @GetMapping("/profit")
     @CheckPersonAuthority
     public BigDecimal getProfit(@RequestParam Long personId) {

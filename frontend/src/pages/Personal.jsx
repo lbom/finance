@@ -158,6 +158,10 @@ export const Personal = () => {
         queryFn: () => api.balance.list(activePersonId),
         enabled: !!activePersonId,
     });
+    const { data: institutions, isLoading: institutionsLoading } = useQuery({
+        queryKey: ['institutions'],
+        queryFn: api.dictionary.institution.list
+    });
     const { data: currencies, isLoading: currenciesLoading } = useQuery({
         queryKey: ['currencies'],
         queryFn: api.dictionary.currency.list
@@ -252,6 +256,7 @@ export const Personal = () => {
         reset: resetBalance
     } = useForm({
         defaultValues: {
+            institutionId: '',
             currencyId: '',
             amount: '',
             type: 'REGULAR'
@@ -364,13 +369,19 @@ export const Personal = () => {
 
     const handleBalanceOpenAdd = () => {
         setBalanceEditing(null);
-        resetBalance({ currencyId: currencies?.[0]?.id || '', amount: '', type: 'REGULAR' });
+        resetBalance({
+            institutionId: institutions?.[0]?.id || '',
+            currencyId: currencies?.[0]?.id || '',
+            amount: '',
+            type: 'REGULAR'
+        });
         setBalanceOpen(true);
     };
 
     const handleBalanceOpenEdit = (row) => {
         setBalanceEditing(row);
         resetBalance({
+            institutionId: row.institutionId ?? '',
             currencyId: row.currencyId ?? '',
             amount: row.amount ?? '',
             type: row.type || 'REGULAR'
@@ -383,6 +394,7 @@ export const Personal = () => {
         const payload = {
             id: balanceEditing?.id,
             personId: activePersonId,
+            institutionId: Number(data.institutionId),
             currencyId: Number(data.currencyId),
             amount: Number(data.amount),
             type: data.type || 'REGULAR'
@@ -475,12 +487,25 @@ export const Personal = () => {
     ];
 
     const currencyMap = new Map((currencies || []).map((c) => [c.id, c]));
+    const institutionMap = new Map((institutions || []).map((i) => [i.id, i]));
     const balanceRows = (balances || []).map(item => ({
         ...item,
         type: item.type || 'REGULAR',
-        currency: currencyMap.get(item.currencyId)
+        currency: currencyMap.get(item.currencyId),
+        institution: institutionMap.get(item.institutionId)
     }));
     const balanceColumns = [
+        {
+            field: 'institution',
+            headerName: 'Institution',
+            flex: 1,
+            minWidth: 160,
+            renderCell: (params) => (
+                <Typography variant="body2" color="text.secondary" noWrap>
+                    {params.value?.name || '—'}
+                </Typography>
+            )
+        },
         {
             field: 'currency',
             headerName: 'Currency',
@@ -561,7 +586,7 @@ export const Personal = () => {
                 )}
             </Box>
 
-            <Box mb={4}>
+            <Box mb={3}>
                 <Paper sx={{ p: 0, borderRadius: 3, overflow: 'hidden' }}>
                     <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
                         <Box display="flex" alignItems="center" gap={2}>
@@ -586,14 +611,14 @@ export const Personal = () => {
                             Add Balance
                         </Button>
                     </Box>
-                    <Box sx={{ height: 320 }}>
+                    <Box sx={{ height: 220 }}>
                         <DataGrid
                             rows={balanceRows}
                             columns={balanceColumns}
-                            loading={balancesLoading || personsLoading || currenciesLoading}
+                            loading={balancesLoading || personsLoading || currenciesLoading || institutionsLoading}
                             disableRowSelectionOnClick
-                            rowHeight={55}
-                            initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+                            rowHeight={48}
+                            initialState={{ pagination: { paginationModel: { pageSize: 3 } } }}
                             sx={{
                                 border: 'none',
                                 '& .MuiDataGrid-cell': { alignItems: 'center' },
@@ -604,7 +629,7 @@ export const Personal = () => {
                 </Paper>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 3, alignItems: 'stretch', flexWrap: 'nowrap' }}>
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'stretch', flexWrap: 'wrap' }}>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                     <FinanceSection
                         title="Income Streams"
@@ -630,49 +655,49 @@ export const Personal = () => {
                         disableAdd={!canTransact}
                     />
                 </Box>
+            </Box>
 
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Paper sx={{ p: 0, height: '100%', borderRadius: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
-                            <Box display="flex" alignItems="center" gap={2}>
-                                <Avatar sx={{ bgcolor: 'secondary.main', color: 'primary.main' }} variant="rounded">
-                                    <Repeat fontSize="small" />
-                                </Avatar>
-                                <Box>
-                                    <Typography variant="h6" fontSize="1rem" fontWeight="bold">Recurrent Transactions</Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Automate recurring income and expenses.
-                                    </Typography>
-                                </Box>
+            <Box mt={3}>
+                <Paper sx={{ p: 0, borderRadius: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+                        <Box display="flex" alignItems="center" gap={2}>
+                            <Avatar sx={{ bgcolor: 'secondary.main', color: 'primary.main' }} variant="rounded">
+                                <Repeat fontSize="small" />
+                            </Avatar>
+                            <Box>
+                                <Typography variant="h6" fontSize="1rem" fontWeight="bold">Recurrent Transactions</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    Automate recurring income and expenses.
+                                </Typography>
                             </Box>
-                            <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<Add />}
-                                onClick={handleRecurrentOpenAdd}
-                                disabled={!canTransact}
-                                sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
-                            >
-                                Add
-                            </Button>
                         </Box>
-                        <Box sx={{ flexGrow: 1, minHeight: 400 }}>
-                            <DataGrid
-                                rows={recurrentRows}
-                                columns={recurrentColumns}
-                                loading={l3 || personsLoading || balancesLoading}
-                                disableRowSelectionOnClick
-                                rowHeight={55}
-                                initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-                                sx={{
-                                    border: 'none',
-                                    '& .MuiDataGrid-cell': { alignItems: 'center' },
-                                    '& .MuiDataGrid-columnSeparator': { display: 'none' }
-                                }}
-                            />
-                        </Box>
-                    </Paper>
-                </Box>
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<Add />}
+                            onClick={handleRecurrentOpenAdd}
+                            disabled={!canTransact}
+                            sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
+                        >
+                            Add
+                        </Button>
+                    </Box>
+                    <Box sx={{ flexGrow: 1, minHeight: 520 }}>
+                        <DataGrid
+                            rows={recurrentRows}
+                            columns={recurrentColumns}
+                            loading={l3 || personsLoading || balancesLoading}
+                            disableRowSelectionOnClick
+                            rowHeight={55}
+                            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+                            sx={{
+                                border: 'none',
+                                '& .MuiDataGrid-cell': { alignItems: 'center' },
+                                '& .MuiDataGrid-columnSeparator': { display: 'none' }
+                            }}
+                        />
+                    </Box>
+                </Paper>
             </Box>
 
             <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
@@ -769,6 +794,26 @@ export const Personal = () => {
                     </DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
+                            <Controller
+                                name="institutionId"
+                                control={balanceControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Institution"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                    >
+                                        {(institutions || []).map((institution) => (
+                                            <MenuItem key={institution.id} value={institution.id}>
+                                                {institution.name}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
                             <Controller
                                 name="currencyId"
                                 control={balanceControl}
