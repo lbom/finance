@@ -1,7 +1,7 @@
 services:
   db:
-    image: postgres:latest
-    container_name: trades
+    image: postgres:16
+    container_name: trades-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: lbom
@@ -9,3 +9,43 @@ services:
       POSTGRES_DB: trades
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lbom -d trades"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    image: gradle:8-jdk21
+    container_name: trades-backend
+    working_dir: /home/gradle/project
+    command: ["gradle", "bootRun"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/trades
+      SPRING_DATASOURCE_USERNAME: lbom
+      SPRING_DATASOURCE_PASSWORD: 123456
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/home/gradle/project
+      - gradle-cache:/home/gradle/.gradle
+
+  frontend:
+    image: node:20-alpine
+    container_name: trades-frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - node-modules:/app/node_modules
+
+volumes:
+  gradle-cache:
+  node-modules:
