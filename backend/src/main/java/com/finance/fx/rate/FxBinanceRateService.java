@@ -8,6 +8,8 @@ import com.finance.fx.pair.PairType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -35,22 +37,30 @@ public class FxBinanceRateService {
     private static final int CLOSE_PRICE_INDEX = 4;
     private static final int OPEN_TIME_INDEX = 0;
 
+    @EventListener(ApplicationReadyEvent.class)
     @Scheduled(cron = "0 0 0,12 * * *")
-    public void scheduledRefresh() {
-        log.info("Starting scheduled crypto rates refresh");
+    public void refreshRates() {
+        log.info("Starting crypto rates refresh");
+        try {
+            List<Pair> cryptoPairs = pairRepo.findAllByType(PairType.CRYPTO);
 
-        List<Pair> cryptoPairs = pairRepo.findAllByType(PairType.CRYPTO);
+            List<FxRate> updatedRates = cryptoPairs.stream()
+                    .map(this::fetchAndMapRate)
+                    .flatMap(Optional::stream)
+                    .toList();
 
-        List<FxRate> updatedRates = cryptoPairs.stream()
-                .map(this::fetchAndMapRate)
-                .flatMap(Optional::stream)
-                .toList();
+            if (!updatedRates.isEmpty()) {
+                repo.saveAll(updatedRates);
+            }
 
-        if (!updatedRates.isEmpty()) {
-            repo.saveAll(updatedRates);
+            log.info("Completed crypto rates refresh. Updated {} symbols", updatedRates.size());
+        } catch (Exception e) {
+            log.error("Failed to refresh crypto rates", e);
         }
+    }
 
-        log.info("Completed crypto rates refresh. Updated {} symbols", updatedRates.size());
+    public void scheduledRefresh() {
+        refreshRates();
     }
 
     private Optional<FxRate> fetchAndMapRate(Pair pair) {

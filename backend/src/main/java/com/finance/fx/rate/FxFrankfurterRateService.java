@@ -4,7 +4,10 @@ import com.finance.fx.pair.Pair;
 import com.finance.fx.pair.PairRepo;
 import com.finance.fx.pair.PairType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FxFrankfurterRateService {
@@ -29,21 +33,28 @@ public class FxFrankfurterRateService {
     @Value("${fx.base-currency:USD}")
     private String baseCurrency;
 
+    @EventListener(ApplicationReadyEvent.class)
     @Scheduled(cron = "0 0 0,12 * * *")
     public void refreshRates() {
-        FxFrankfurterRateResponse response = fetchRates();
-        Map<String, BigDecimal> ratesMap = response.rates().entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> response.base() + e.getKey(),
-                        Map.Entry::getValue
-                ));
-        List<Pair> forexPairs = pairRepo.findAllByType(PairType.FOREX);
-        List<FxRate> updatedRates = forexPairs.stream()
-                .filter(pair -> ratesMap.containsKey(pair.getSymbol()))
-                .map(pair -> createFxRate(pair, ratesMap.get(pair.getSymbol()), response.date()))
-                .toList();
-        if (!updatedRates.isEmpty()) {
-            fxRateRepo.saveAll(updatedRates);
+        log.info("Starting forex rates refresh");
+        try {
+            FxFrankfurterRateResponse response = fetchRates();
+            Map<String, BigDecimal> ratesMap = response.rates().entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> response.base() + e.getKey(),
+                            Map.Entry::getValue
+                    ));
+            List<Pair> forexPairs = pairRepo.findAllByType(PairType.FOREX);
+            List<FxRate> updatedRates = forexPairs.stream()
+                    .filter(pair -> ratesMap.containsKey(pair.getSymbol()))
+                    .map(pair -> createFxRate(pair, ratesMap.get(pair.getSymbol()), response.date()))
+                    .toList();
+            if (!updatedRates.isEmpty()) {
+                fxRateRepo.saveAll(updatedRates);
+            }
+            log.info("Completed forex rates refresh. Updated {} symbols", updatedRates.size());
+        } catch (Exception e) {
+            log.error("Failed to refresh forex rates", e);
         }
     }
 

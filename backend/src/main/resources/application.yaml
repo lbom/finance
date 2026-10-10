@@ -22,6 +22,8 @@ fx:
   base-currency: USD
 fx-crypto:
   base-url: https://api.binance.com/api/v3/klines
+fx-kzt:
+  url: https://nationalbank.kz/rss/rates_all.xml
 
 #logging:
 #  level:
