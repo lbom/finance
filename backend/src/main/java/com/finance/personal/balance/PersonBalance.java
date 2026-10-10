@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -31,4 +32,10 @@ public class PersonBalance {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private PersonBalanceType type;
+
+    @Column(name = "interest_rate", precision = 10, scale = 4)
+    private BigDecimal interestRate;
+
+    @Column(name = "last_profit_date")
+    private LocalDate lastProfitDate;
 }

@@ -15,8 +15,9 @@ public record PersonTransactionRecurrentDto(
     String details,
     boolean isActive,
     @Nonnull Long balanceId,
-    @Nonnull BigDecimal amount,
+    BigDecimal amount,
     @Nonnull PersonTransactionType type,
     PersonSpendingType spendingType,
-    PersonProfitType profitType
+    PersonProfitType profitType,
+    BigDecimal interestRate
 ) {}

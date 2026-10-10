@@ -20,9 +20,9 @@ import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
-const ProfitTypes = ["SALARY", "BUSINESS", "INVESTMENT", "TRADE", "GIFT", "OTHER"];
+const ProfitTypes = ["SALARY", "DEPOSIT", "BUSINESS", "INVESTMENT", "TRADE", "GIFT", "OTHER"];
 const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "SUBSCRIPTION", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "OTHER"];
-const BalanceTypes = ["REGULAR", "CRYPTO"];
+const BalanceTypes = ["REGULAR", "CRYPTO", "DEPOSIT"];
 
 // Safe Currency Formatter
 const formatMoney = (val) => {
@@ -323,6 +323,24 @@ export const Personal = () => {
         }
     });
 
+    const processRecurrent = useMutation({
+        mutationFn: () => api.recurrent.process(activePersonId, true),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
+            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
+            queryClient.invalidateQueries(['balances', activePersonId]);
+            queryClient.invalidateQueries(['recurrent', activePersonId]);
+        }
+    });
+
+    const applyDepositProfits = useMutation({
+        mutationFn: () => api.balance.applyDepositProfits(activePersonId, true),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
+            queryClient.invalidateQueries(['balances', activePersonId]);
+        }
+    });
+
     const today = new Date().toISOString().slice(0, 10);
     const { control, handleSubmit, reset } = useForm({
         defaultValues: { category: '', amount: '', localDate: today, details: '', balanceId: '' }
@@ -341,7 +359,8 @@ export const Personal = () => {
             amount: '',
             isActive: true,
             balanceId: '',
-            details: ''
+            details: '',
+            interestRate: ''
         }
     });
     const {
@@ -353,7 +372,8 @@ export const Personal = () => {
             institutionId: '',
             currencyId: '',
             amount: '',
-            type: 'REGULAR'
+            type: 'REGULAR',
+            interestRate: ''
         }
     });
     const {
@@ -367,6 +387,7 @@ export const Personal = () => {
     });
     const recurrentType = useWatch({ control: recurrentControl, name: 'type' });
     const recurrentCategory = useWatch({ control: recurrentControl, name: 'category' });
+    const balanceType = useWatch({ control: balanceControl, name: 'type' });
 
     useEffect(() => {
         if (!persons?.length) {
@@ -461,7 +482,8 @@ export const Personal = () => {
             amount: '',
             isActive: true,
             balanceId: activeBalanceId || '',
-            details: ''
+            details: '',
+            interestRate: ''
         });
         setRecurrentOpen(true);
     };
@@ -477,7 +499,8 @@ export const Personal = () => {
             amount: row.amount ?? '',
             isActive: !!row.isActive,
             balanceId: row.balanceId ?? activeBalanceId ?? '',
-            details: row.details || ''
+            details: row.details || '',
+            interestRate: row.interestRate ?? ''
         });
         setRecurrentOpen(true);
     };
@@ -491,11 +514,12 @@ export const Personal = () => {
             name: data.name.trim(),
             details: data.details?.trim() || '',
             periodDays: Number(data.periodDays),
-            amount: Number(data.amount),
+            amount: data.amount !== '' && data.amount != null ? Number(data.amount) : 0,
             isActive: !!data.isActive,
             type: data.type,
             profitType: data.type === 'PROFIT' ? data.category : null,
-            spendingType: data.type === 'SPENDING' ? data.category : null
+            spendingType: data.type === 'SPENDING' ? data.category : null,
+            interestRate: data.category === 'DEPOSIT' && data.interestRate ? Number(data.interestRate) : null
         };
         saveRecurrent.mutate(payload);
     };
@@ -506,7 +530,8 @@ export const Personal = () => {
             institutionId: institutions?.[0]?.id || '',
             currencyId: currencies?.[0]?.id || '',
             amount: '',
-            type: 'REGULAR'
+            type: 'REGULAR',
+            interestRate: ''
         });
         setBalanceOpen(true);
     };
@@ -517,7 +542,8 @@ export const Personal = () => {
             institutionId: row.institutionId ?? '',
             currencyId: row.currencyId ?? '',
             amount: row.amount ?? '',
-            type: row.type || 'REGULAR'
+            type: row.type || 'REGULAR',
+            interestRate: row.interestRate ?? ''
         });
         setBalanceOpen(true);
     };
@@ -530,7 +556,8 @@ export const Personal = () => {
             institutionId: Number(data.institutionId),
             currencyId: Number(data.currencyId),
             amount: Number(data.amount),
-            type: data.type || 'REGULAR'
+            type: data.type || 'REGULAR',
+            interestRate: data.type === 'DEPOSIT' && data.interestRate ? Number(data.interestRate) : null
         };
         saveBalance.mutate(payload);
     };
@@ -838,16 +865,30 @@ export const Personal = () => {
                                 </Typography>
                             </Box>
                         </Box>
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<Add />}
-                            onClick={handleBalanceOpenAdd}
-                            disabled={!activePersonId}
-                            sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
-                        >
-                            Add Balance
-                        </Button>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            {(balanceRows || []).some(b => b.type === 'DEPOSIT') && (
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="secondary"
+                                    onClick={() => applyDepositProfits.mutate()}
+                                    disabled={!activePersonId || applyDepositProfits.isLoading}
+                                    sx={{ borderRadius: 2, textTransform: 'none' }}
+                                >
+                                    {applyDepositProfits.isLoading ? 'Applying...' : 'Apply Deposit Profit'}
+                                </Button>
+                            )}
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Add />}
+                                onClick={handleBalanceOpenAdd}
+                                disabled={!activePersonId}
+                                sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
+                            >
+                                Add Balance
+                            </Button>
+                        </Box>
                     </Box>
                     <Box sx={{ p: 2 }}>
                         <Grid container spacing={2}>
@@ -861,6 +902,7 @@ export const Personal = () => {
                                                 </Typography>
                                                 <Typography variant="caption" color="text.secondary" noWrap>
                                                     {balance.currency?.symbol || '—'} · {balance.type || 'REGULAR'}
+                                                    {balance.type === 'DEPOSIT' && balance.interestRate != null ? ` (${balance.interestRate}%/yr)` : ''}
                                                 </Typography>
                                             </Box>
                                             <Box display="flex" alignItems="center" gap={0.5}>
@@ -948,16 +990,27 @@ export const Personal = () => {
                                 </Typography>
                             </Box>
                         </Box>
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<Add />}
-                            onClick={handleRecurrentOpenAdd}
-                            disabled={!canTransact}
-                            sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
-                        >
-                            Add
-                        </Button>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => processRecurrent.mutate()}
+                                disabled={!canTransact || processRecurrent.isLoading}
+                                sx={{ borderRadius: 2, textTransform: 'none' }}
+                            >
+                                {processRecurrent.isLoading ? 'Processing...' : 'Run Due Jobs'}
+                            </Button>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Add />}
+                                onClick={handleRecurrentOpenAdd}
+                                disabled={!canTransact}
+                                sx={{ borderRadius: 2, borderColor: 'divider', color: 'text.secondary' }}
+                            >
+                                Add
+                            </Button>
+                        </Box>
                     </Box>
                     <Box sx={{ flexGrow: 1, minHeight: 520 }}>
                         <DataGrid
@@ -1177,6 +1230,26 @@ export const Personal = () => {
                                     </TextField>
                                 )}
                             />
+                            {balanceType === 'DEPOSIT' && (
+                                <Controller
+                                    name="interestRate"
+                                    control={balanceControl}
+                                    rules={{ required: balanceType === 'DEPOSIT', min: 0 }}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Yearly Interest Rate (%)"
+                                            type="number"
+                                            fullWidth
+                                            InputProps={{
+                                                endAdornment: '%',
+                                                sx: { borderRadius: 2 }
+                                            }}
+                                            helperText="Annual percentage rate (e.g. 14 for 14%/year). Profit is applied monthly."
+                                        />
+                                    )}
+                                />
+                            )}
                         </Box>
                     </DialogContent>
                     <DialogActions sx={{ p: 3 }}>
@@ -1300,7 +1373,7 @@ export const Personal = () => {
                             <Controller
                                 name="amount"
                                 control={recurrentControl}
-                                rules={{ required: true, min: 0 }}
+                                rules={{ required: recurrentCategory !== 'DEPOSIT', min: 0 }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
@@ -1310,9 +1383,29 @@ export const Personal = () => {
                                         InputProps={{
                                             sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 600 }
                                         }}
+                                        helperText={recurrentCategory === 'DEPOSIT' ? "Fixed monthly amount or calculated from yearly rate" : ""}
                                     />
                                 )}
                             />
+                            {recurrentCategory === 'DEPOSIT' && (
+                                <Controller
+                                    name="interestRate"
+                                    control={recurrentControl}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Yearly Interest Rate (%)"
+                                            type="number"
+                                            fullWidth
+                                            InputProps={{
+                                                endAdornment: '%',
+                                                sx: { borderRadius: 2 }
+                                            }}
+                                            helperText="Optional: Yearly interest rate to calculate profit dynamically from balance"
+                                        />
+                                    )}
+                                />
+                            )}
                             <Controller
                                 name="details"
                                 control={recurrentControl}

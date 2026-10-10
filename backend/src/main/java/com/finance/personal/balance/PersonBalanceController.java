@@ -17,6 +17,26 @@ public class PersonBalanceController {
     private final PersonBalanceService service;
     private final PersonBalanceMapper mapper;
     private final UserModule userModule;
+    private final DepositProfitService depositProfitService;
+
+    @PostMapping("/apply-deposit-profits")
+    @CheckPersonAuthority
+    public java.util.Map<String, Object> applyDepositProfits(
+        @RequestParam Long personId,
+        @RequestParam(required = false, defaultValue = "false") boolean force
+    ) {
+        int applied = depositProfitService.applyMonthlyDepositProfitsForPerson(personId, force);
+        return java.util.Map.of("applied", applied);
+    }
+
+    @GetMapping("/deposit-profit")
+    @CheckPersonAuthority
+    public BigDecimal getDepositProfit(
+        @RequestParam Long personId,
+        @RequestParam(required = false) Long baseCurrencyId
+    ) {
+        return depositProfitService.calcOverallDepositProfit(personId, baseCurrencyId);
+    }
 
     @GetMapping
     @CheckPersonAuthority

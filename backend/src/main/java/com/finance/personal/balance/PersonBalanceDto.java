@@ -3,6 +3,7 @@ package com.finance.personal.balance;
 import jakarta.annotation.Nonnull;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record PersonBalanceDto(
     Long id,
@@ -10,5 +11,7 @@ public record PersonBalanceDto(
     @Nonnull Long institutionId,
     @Nonnull Long currencyId,
     @Nonnull BigDecimal amount,
-    PersonBalanceType type
+    PersonBalanceType type,
+    BigDecimal interestRate,
+    LocalDate lastProfitDate
 ) {}

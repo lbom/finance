@@ -34,6 +34,16 @@ public class PersonTransactionRecurrentController {
         return service.sumActiveSubscriptionsAverageMonthly(personId);
     }
 
+    @PostMapping("/process")
+    @CheckPersonAuthority
+    public java.util.Map<String, Object> process(
+        @RequestParam Long personId,
+        @RequestParam(required = false, defaultValue = "false") boolean force
+    ) {
+        int processed = service.processRecurrentTransactionsForPerson(personId, force);
+        return java.util.Map.of("processed", processed);
+    }
+
     @PostMapping
     @CheckPersonAuthority
     public void add(

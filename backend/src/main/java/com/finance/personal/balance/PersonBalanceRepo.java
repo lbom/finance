@@ -7,5 +7,5 @@ import java.util.List;
 public interface PersonBalanceRepo extends JpaRepository<PersonBalance, Long> {
     List<PersonBalance> getPersonalBalancesByPersonId(Long personId);
     List<PersonBalance> getPersonalBalancesByPersonIdAndType(Long personId, PersonBalanceType type);
-
+    List<PersonBalance> findByType(PersonBalanceType type);
 }

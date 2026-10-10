@@ -39,6 +39,9 @@ export const api = {
         delete: (personId, transactionId) => (
             client.delete(`/finance/personal/transaction/recurrent/${transactionId}`, { params: { personId } })
         ),
+        process: (personId, force = false) => (
+            client.post('/finance/personal/transaction/recurrent/process', null, { params: { personId, force } }).then(r => r.data)
+        ),
     },
     person: {
         list: () => client.get('/finance/personal/person').then(r => r.data),
@@ -48,8 +51,15 @@ export const api = {
         list: (personId) => client.get('/finance/personal/balance', { params: { personId } }).then(r => r.data),
         create: (personId, data) => client.post('/finance/personal/balance', data, { params: { personId } }),
         delete: (personId, balanceId) => client.delete(`/finance/personal/balance/${balanceId}`, { params: { personId } }),
+        applyDepositProfits: (personId, force = false) => (
+            client.post('/finance/personal/balance/apply-deposit-profits', null, { params: { personId, force } }).then(r => r.data)
+        ),
         sumAll: (personId, baseCurrencyId, balanceType) => (
             client.get('/finance/personal/balance/sumAll', { params: { personId, baseCurrencyId, balanceType } })
+                .then(r => r.data)
+        ),
+        depositProfit: (personId, baseCurrencyId) => (
+            client.get('/finance/personal/balance/deposit-profit', { params: { personId, baseCurrencyId } })
                 .then(r => r.data)
         ),
     },

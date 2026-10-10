@@ -42,6 +42,7 @@ export const Dashboard = () => {
     const usdtCurrencyId = (currencies || []).find((c) => c.symbol?.toUpperCase() === 'USDT')?.id;
     const regularBalances = (balances || []).filter((b) => (b.type || 'REGULAR') === 'REGULAR');
     const cryptoBalances = (balances || []).filter((b) => b.type === 'CRYPTO');
+    const depositBalances = (balances || []).filter((b) => b.type === 'DEPOSIT');
 
     const { data: totalUsd, isLoading: totalUsdLoading } = useQuery({
         queryKey: ['balances', activePersonId, 'sumAll', 'USD', usdCurrencyId],
@@ -53,6 +54,16 @@ export const Dashboard = () => {
         queryFn: () => api.balance.sumAll(activePersonId, usdtCurrencyId, 'CRYPTO'),
         enabled: !!activePersonId && !!usdtCurrencyId,
     });
+    const { data: totalDepositsUsd, isLoading: totalDepositsUsdLoading } = useQuery({
+        queryKey: ['balances', activePersonId, 'sumAll', 'DEPOSIT', usdCurrencyId],
+        queryFn: () => api.balance.sumAll(activePersonId, usdCurrencyId, 'DEPOSIT'),
+        enabled: !!activePersonId && !!usdCurrencyId,
+    });
+    const { data: depositProfit, isLoading: depositProfitLoading } = useQuery({
+        queryKey: ['balances', activePersonId, 'depositProfit', usdCurrencyId],
+        queryFn: () => api.balance.depositProfit(activePersonId, usdCurrencyId),
+        enabled: !!activePersonId,
+    });
     const { data: subscriptionsTotal, isLoading: subscriptionsLoading } = useQuery({
         queryKey: ['recurrent', activePersonId, 'sumSubscriptions'],
         queryFn: () => api.recurrent.sumSubscriptions(activePersonId),
@@ -63,11 +74,13 @@ export const Dashboard = () => {
         <Box>
             <Typography variant="h4" gutterBottom>Financial Overview</Typography>
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6}><StatCard title="Trade Profits" value={tradeProfit} isLoading={l1 || personsLoading} /></Grid>
-                <Grid item xs={12} md={6}><StatCard title="Investment Returns" value={investProfit} isLoading={l2 || personsLoading} /></Grid>
-                <Grid item xs={12} md={6}><StatCard title="Total Balances (USD)" value={totalUsd} isLoading={totalUsdLoading || personsLoading} /></Grid>
-                <Grid item xs={12} md={6}><StatCard title="Total Balances (USDT)" value={totalUsdt} isLoading={totalUsdtLoading || personsLoading} /></Grid>
-                <Grid item xs={12} md={6}><StatCard title="Monthly Subscriptions" value={subscriptionsTotal} isLoading={subscriptionsLoading || personsLoading} color="error.main" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Trade Profits" value={tradeProfit} isLoading={l1 || personsLoading} /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Investment Returns" value={investProfit} isLoading={l2 || personsLoading} /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Deposit Profit (USD)" value={depositProfit} isLoading={depositProfitLoading || personsLoading} color="success.main" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Total Deposits (USD)" value={totalDepositsUsd} isLoading={totalDepositsUsdLoading || personsLoading} color="info.main" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Total Balances (USD)" value={totalUsd} isLoading={totalUsdLoading || personsLoading} /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Total Balances (USDT)" value={totalUsdt} isLoading={totalUsdtLoading || personsLoading} /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Monthly Subscriptions" value={subscriptionsTotal} isLoading={subscriptionsLoading || personsLoading} color="error.main" /></Grid>
                 <Grid item xs={12}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="subtitle1" color="text.secondary">Balances</Typography>
@@ -90,6 +103,29 @@ export const Dashboard = () => {
                                 );
                             })}
                         </Box>
+
+                        <Typography variant="subtitle1" color="text.secondary">Deposit Balances</Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2, mb: 2 }}>
+                            {(balancesLoading || personsLoading) && (
+                                <Typography variant="body2" color="text.secondary">Loading deposit balances…</Typography>
+                            )}
+                            {!balancesLoading && depositBalances.length === 0 && (
+                                <Typography variant="body2" color="text.secondary">No deposit balances yet.</Typography>
+                            )}
+                            {depositBalances.map((balance) => {
+                                const currency = currencyMap.get(balance.currencyId);
+                                const label = currency ? currency.symbol : '—';
+                                const rateLabel = balance.interestRate ? ` (${balance.interestRate}% APY)` : '';
+                                return (
+                                    <Chip
+                                        key={balance.id}
+                                        label={`${label} ${Number(balance.amount).toLocaleString()}${rateLabel}`}
+                                        sx={{ bgcolor: 'info.main', color: '#fff', fontWeight: 600 }}
+                                    />
+                                );
+                            })}
+                        </Box>
+
                         <Typography variant="subtitle1" color="text.secondary">Crypto Balances</Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
                             {(balancesLoading || personsLoading) && (

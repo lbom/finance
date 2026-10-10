@@ -9,4 +9,11 @@ public interface PersonTransactionRepo extends JpaRepository<PersonTransaction, 
         Long personId,
         PersonTransactionType type
     );
+
+    List<PersonTransaction> findByPersonIdAndTypeAndProfitType(
+        Long personId,
+        PersonTransactionType type,
+        PersonProfitType profitType
+    );
 }
+

@@ -55,6 +55,9 @@ public class PersonTransactionRecurrent {
     @Enumerated(EnumType.STRING)
     @Column(name = "profit_type", length = Integer.MAX_VALUE)
     private PersonProfitType profitType;
+
+    @Column(name = "interest_rate", precision = 10, scale = 4)
+    private BigDecimal interestRate;
 }
 
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,9 +22,17 @@ public class PersonBalanceService {
     public List<PersonBalance> getBalances(Long personId) {
         return repo.getPersonalBalancesByPersonId(personId);
     }
+
+    public Optional<PersonBalance> findById(Long id) {
+        return repo.findById(id);
+    }
+
     public void save(PersonBalance balance) {
         if (balance.getType() == null) {
             balance.setType(PersonBalanceType.REGULAR);
+        }
+        if (balance.getType() == PersonBalanceType.DEPOSIT && balance.getLastProfitDate() == null) {
+            balance.setLastProfitDate(java.time.LocalDate.now());
         }
         repo.save(balance);
     }
