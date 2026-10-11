@@ -264,17 +264,16 @@ export const Personal = () => {
 
     const addTransaction = useMutation({
         mutationFn: (data) => api.personal.create(activePersonId, data),
-        onSuccess: (_, variables) => {
-            // Invalidate specifically the type we just added
-            queryClient.invalidateQueries(['personal', activePersonId, variables.type]);
+        onSuccess: () => {
+            queryClient.invalidateQueries(['personal', activePersonId]);
+            queryClient.invalidateQueries(['balances', activePersonId]);
             handleClose();
         }
     });
     const updateTransaction = useMutation({
         mutationFn: ({ transactionId, payload }) => api.personal.update(activePersonId, transactionId, payload),
         onSuccess: () => {
-            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
-            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
+            queryClient.invalidateQueries(['personal', activePersonId]);
             queryClient.invalidateQueries(['balances', activePersonId]);
             handleClose();
         }
@@ -282,8 +281,7 @@ export const Personal = () => {
     const deleteTransaction = useMutation({
         mutationFn: (transactionId) => api.personal.delete(activePersonId, transactionId),
         onSuccess: () => {
-            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
-            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
+            queryClient.invalidateQueries(['personal', activePersonId]);
             queryClient.invalidateQueries(['balances', activePersonId]);
         }
     });

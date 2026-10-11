@@ -78,6 +78,16 @@ export const Dashboard = () => {
         queryFn: () => api.recurrent.sumSubscriptions(activePersonId),
         enabled: !!activePersonId,
     });
+    const { data: foodStoreMonthly, isLoading: foodStoreLoading } = useQuery({
+        queryKey: ['personal', activePersonId, 'monthlyExpenses', 'FOOD_STORE'],
+        queryFn: () => api.personal.monthlyExpenses(activePersonId, 'FOOD_STORE'),
+        enabled: !!activePersonId,
+    });
+    const { data: foodRestaurantMonthly, isLoading: foodRestaurantLoading } = useQuery({
+        queryKey: ['personal', activePersonId, 'monthlyExpenses', 'FOOD_RESTAURANT'],
+        queryFn: () => api.personal.monthlyExpenses(activePersonId, 'FOOD_RESTAURANT'),
+        enabled: !!activePersonId,
+    });
 
     return (
         <Box>
@@ -90,6 +100,8 @@ export const Dashboard = () => {
                 <Grid item xs={12} sm={6} md={4}><StatCard title="Total Balances (USD)" value={totalUsd} isLoading={totalUsdLoading || personsLoading} /></Grid>
                 <Grid item xs={12} sm={6} md={4}><StatCard title="Total Balances (USDT)" value={totalUsdt} isLoading={totalUsdtLoading || personsLoading} /></Grid>
                 <Grid item xs={12} sm={6} md={4}><StatCard title="Monthly Subscriptions" value={subscriptionsTotal} isLoading={subscriptionsLoading || personsLoading} color="error.main" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Food Store Monthly Expenses" value={foodStoreMonthly} isLoading={foodStoreLoading || personsLoading} color="error.main" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><StatCard title="Food Restaurant Monthly Expenses" value={foodRestaurantMonthly} isLoading={foodRestaurantLoading || personsLoading} color="error.main" /></Grid>
                 <Grid item xs={12}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="subtitle1" color="text.secondary">Balances</Typography>

@@ -6,8 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -91,5 +94,44 @@ public class PersonTransactionService {
                 boolean applySubtract = dto.type() == PersonTransactionType.SPENDING;
                 personBalanceService.update(dto.balanceId(), dto.amount(), applySubtract);
             });
+    }
+
+    public BigDecimal getMonthlyExpenses(
+        Long personId,
+        PersonSpendingType spendingType,
+        Integer year,
+        Integer month
+    ) {
+        LocalDate today = LocalDate.now();
+        int targetYear = (year != null) ? year : today.getYear();
+        int targetMonth = (month != null) ? month : today.getMonthValue();
+
+        YearMonth yearMonth = YearMonth.of(targetYear, targetMonth);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        List<PersonTransaction> transactions;
+        if (spendingType != null) {
+            transactions = repository.findByPersonIdAndTypeAndSpendingTypeAndLocalDateBetween(
+                personId,
+                PersonTransactionType.SPENDING,
+                spendingType,
+                startDate,
+                endDate
+            );
+        } else {
+            transactions = repository.findByPersonIdAndTypeAndLocalDateBetween(
+                personId,
+                PersonTransactionType.SPENDING,
+                startDate,
+                endDate
+            );
+        }
+
+        return transactions.stream()
+            .map(PersonTransaction::getAmount)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .setScale(2, RoundingMode.HALF_UP);
     }
 }

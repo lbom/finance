@@ -4,6 +4,7 @@ import com.finance.app.CheckPersonAuthority;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -22,6 +23,17 @@ public class PersonTransactionController {
     ) {
         var transactions = service.getTransactionsByType(personId, type);
         return mapper.toDto(transactions);
+    }
+
+    @GetMapping("/monthlyExpenses")
+    @CheckPersonAuthority
+    public BigDecimal getMonthlyExpenses(
+        @RequestParam Long personId,
+        @RequestParam(required = false) PersonSpendingType spendingType,
+        @RequestParam(required = false) Integer year,
+        @RequestParam(required = false) Integer month
+    ) {
+        return service.getMonthlyExpenses(personId, spendingType, year, month);
     }
 
     @PostMapping
