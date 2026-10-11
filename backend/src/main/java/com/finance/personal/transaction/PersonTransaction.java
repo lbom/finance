@@ -41,6 +41,6 @@ public class PersonTransaction {
     @Column(name = "profit_type", length = Integer.MAX_VALUE)
     private PersonProfitType profitType;
 
-    @Column(name = "amount", precision = 19, scale = 2)
+    @Column(name = "amount", precision = 28, scale = 8)
     private BigDecimal amount;
 }

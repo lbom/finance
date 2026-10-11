@@ -29,7 +29,7 @@ public class PersonTransactionRecurrent {
     @Column(name = "period_days")
     private Integer periodDays;
 
-    @Column(name = "amount")
+    @Column(name = "amount", precision = 28, scale = 8)
     private BigDecimal amount;
 
     @Column(name = "last_run_date")

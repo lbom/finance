@@ -24,10 +24,17 @@ const ProfitTypes = ["SALARY", "DEPOSIT", "BUSINESS", "INVESTMENT", "TRADE", "GI
 const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "SUBSCRIPTION", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "OTHER"];
 const BalanceTypes = ["REGULAR", "CRYPTO", "DEPOSIT"];
 
-// Safe Currency Formatter
-const formatMoney = (val) => {
+// Safe Currency Formatter (supports crypto with up to 8 decimal places)
+const formatMoney = (val, isCrypto = false) => {
     if (val == null) return '-';
-    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(val);
+    const num = Number(val);
+    if (Number.isNaN(num)) return '-';
+    const decimals = (num.toString().split('.')[1] || '').length;
+    const isHighPrecision = isCrypto || decimals > 2;
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: isHighPrecision ? 0 : 2,
+        maximumFractionDigits: isHighPrecision ? 8 : 2
+    }).format(num);
 };
 
 // --- Reusable Section Component ---
@@ -366,7 +373,8 @@ export const Personal = () => {
     const {
         control: balanceControl,
         handleSubmit: handleBalanceSubmit,
-        reset: resetBalance
+        reset: resetBalance,
+        setValue: setValueBalance
     } = useForm({
         defaultValues: {
             institutionId: '',
@@ -526,11 +534,13 @@ export const Personal = () => {
 
     const handleBalanceOpenAdd = () => {
         setBalanceEditing(null);
+        const firstCurr = currencies?.[0];
+        const isFirstCrypto = firstCurr && ['BTC', 'ETH', 'SOL', 'BNB', 'USDT'].includes(firstCurr.symbol?.toUpperCase());
         resetBalance({
             institutionId: institutions?.[0]?.id || '',
-            currencyId: currencies?.[0]?.id || '',
+            currencyId: firstCurr?.id || '',
             amount: '',
-            type: 'REGULAR',
+            type: isFirstCrypto ? 'CRYPTO' : 'REGULAR',
             interestRate: ''
         });
         setBalanceOpen(true);
@@ -783,7 +793,7 @@ export const Personal = () => {
             headerAlign: 'right',
             renderCell: (params) => (
                 <Typography fontWeight="bold" fontSize="0.9rem" sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    {formatMoney(params.value)}
+                    {formatMoney(params.value, params.row.type === 'CRYPTO')}
                 </Typography>
             )
         },
@@ -926,7 +936,7 @@ export const Personal = () => {
                                         </Box>
                                         <Box mt={2}>
                                             <Typography variant="h6" fontWeight={700}>
-                                                {formatMoney(balance.amount)}
+                                                {formatMoney(balance.amount, balance.type === 'CRYPTO')}
                                             </Typography>
                                         </Box>
                                     </Paper>
@@ -1091,6 +1101,7 @@ export const Personal = () => {
                                         {...field}
                                         label="Amount"
                                         type="number"
+                                        inputProps={{ step: "any" }}
                                         fullWidth
                                         InputProps={{
                                             startAdornment: '$',
@@ -1186,6 +1197,15 @@ export const Personal = () => {
                                         label="Currency"
                                         fullWidth
                                         SelectProps={{ sx: { borderRadius: 2 } }}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                            const selectedId = Number(e.target.value);
+                                            const selectedCurr = (currencies || []).find(c => c.id === selectedId);
+                                            const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'USDT'];
+                                            if (selectedCurr && cryptoSymbols.includes(selectedCurr.symbol?.toUpperCase())) {
+                                                setValueBalance('type', 'CRYPTO');
+                                            }
+                                        }}
                                     >
                                         {(currencies || []).map((currency) => (
                                             <MenuItem key={currency.id} value={currency.id}>
@@ -1204,9 +1224,9 @@ export const Personal = () => {
                                         {...field}
                                         label="Amount"
                                         type="number"
+                                        inputProps={{ step: "any" }}
                                         fullWidth
                                         InputProps={{
-                                            startAdornment: '$',
                                             sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 600 }
                                         }}
                                     />
@@ -1379,6 +1399,7 @@ export const Personal = () => {
                                         {...field}
                                         label="Amount"
                                         type="number"
+                                        inputProps={{ step: "any" }}
                                         fullWidth
                                         InputProps={{
                                             sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 600 }

@@ -26,7 +26,7 @@ public class PersonBalance {
     @Column(name = "currency_id")
     private Long currencyId;
 
-    @Column(name = "amount", precision = 19, scale = 2)
+    @Column(name = "amount", precision = 28, scale = 8)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)

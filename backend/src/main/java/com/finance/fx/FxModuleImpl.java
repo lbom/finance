@@ -25,12 +25,12 @@ public class FxModuleImpl implements FxModule {
 
     @Override
     public List<FxModuleRateDto> getForexRates(Long baseCurrencyId) {
-        return getRatesByTypeAndBaseCurrencyId(PairType.FOREX, baseCurrencyId);
+        return getRatesByTypeAndCurrencyId(PairType.FOREX, baseCurrencyId);
     }
 
     @Override
     public List<FxModuleRateDto> getCryptoRates(Long baseCurrencyId) {
-        return getRatesByTypeAndBaseCurrencyId(PairType.CRYPTO, baseCurrencyId);
+        return getRatesByTypeAndCurrencyId(PairType.CRYPTO, baseCurrencyId);
     }
 
     @Override
@@ -40,9 +40,11 @@ public class FxModuleImpl implements FxModule {
         fxNationalBankKztRateService.refreshRates();
     }
 
-    private List<FxModuleRateDto> getRatesByTypeAndBaseCurrencyId(PairType type, Long baseCurrencyId){
-        var pairIds = fxPairRepo.findAllByTypeAndBaseCurrencyId(type, baseCurrencyId)
-                .stream()
+    private List<FxModuleRateDto> getRatesByTypeAndCurrencyId(PairType type, Long currencyId) {
+        var pairs = currencyId == null
+                ? fxPairRepo.findAllByType(type)
+                : fxPairRepo.findAllByTypeAndCurrencyId(type, currencyId);
+        var pairIds = pairs.stream()
                 .map(Pair::getId)
                 .toList();
         var entities = fxRateRepo.findAllById(pairIds);

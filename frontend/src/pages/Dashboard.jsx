@@ -4,7 +4,10 @@ import { Grid, Paper, Typography, Box, Chip } from '@mui/material';
 import { api } from '../api/endpoints.js';
 
 const StatCard = ({ title, value, isLoading, color = 'primary.main' }) => {
-    const displayValue = value == null ? '—' : `${Number(value).toLocaleString()}`;
+    const displayValue = value == null ? '—' : Number(value).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
     return (
         <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <Typography variant="subtitle1" color="text.secondary">{title}</Typography>
@@ -40,8 +43,14 @@ export const Dashboard = () => {
     const currencyMap = new Map((currencies || []).map((c) => [c.id, c]));
     const usdCurrencyId = (currencies || []).find((c) => c.symbol?.toUpperCase() === 'USD')?.id;
     const usdtCurrencyId = (currencies || []).find((c) => c.symbol?.toUpperCase() === 'USDT')?.id;
-    const regularBalances = (balances || []).filter((b) => (b.type || 'REGULAR') === 'REGULAR');
-    const cryptoBalances = (balances || []).filter((b) => b.type === 'CRYPTO');
+    const cryptoCurrencySymbols = new Set(['BTC', 'ETH', 'SOL', 'BNB', 'USDT']);
+    const isCryptoBalance = (b) => {
+        if (b.type === 'CRYPTO') return true;
+        const sym = currencyMap.get(b.currencyId)?.symbol?.toUpperCase();
+        return cryptoCurrencySymbols.has(sym);
+    };
+    const regularBalances = (balances || []).filter((b) => (b.type || 'REGULAR') === 'REGULAR' && !isCryptoBalance(b));
+    const cryptoBalances = (balances || []).filter(isCryptoBalance);
     const depositBalances = (balances || []).filter((b) => b.type === 'DEPOSIT');
 
     const { data: totalUsd, isLoading: totalUsdLoading } = useQuery({
@@ -97,7 +106,7 @@ export const Dashboard = () => {
                                 return (
                                     <Chip
                                         key={balance.id}
-                                        label={`${label} ${Number(balance.amount).toLocaleString()}`}
+                                        label={`${label} ${Number(balance.amount).toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                                         sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
                                     />
                                 );
@@ -119,7 +128,7 @@ export const Dashboard = () => {
                                 return (
                                     <Chip
                                         key={balance.id}
-                                        label={`${label} ${Number(balance.amount).toLocaleString()}${rateLabel}`}
+                                        label={`${label} ${Number(balance.amount).toLocaleString('en-US', { maximumFractionDigits: 2 })}${rateLabel}`}
                                         sx={{ bgcolor: 'info.main', color: '#fff', fontWeight: 600 }}
                                     />
                                 );
@@ -140,7 +149,7 @@ export const Dashboard = () => {
                                 return (
                                     <Chip
                                         key={balance.id}
-                                        label={`${label} ${Number(balance.amount).toLocaleString()}`}
+                                        label={`${label} ${Number(balance.amount).toLocaleString('en-US', { maximumFractionDigits: 8 })}`}
                                         sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
                                     />
                                 );

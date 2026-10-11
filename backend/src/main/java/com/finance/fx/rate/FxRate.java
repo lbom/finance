@@ -16,6 +16,7 @@ public class FxRate {
     @Id
     private Long pairId;
 
+    @Column(name = "price", precision = 28, scale = 8)
     private BigDecimal price;
 
     private LocalDate candleDate;

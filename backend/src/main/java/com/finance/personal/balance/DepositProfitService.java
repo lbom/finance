@@ -158,17 +158,9 @@ public class DepositProfitService {
 
         var forexRates = fxModule.getForexRates(baseCurrencyId);
         var cryptoRates = fxModule.getCryptoRates(baseCurrencyId);
-        var ratesByQuote = new HashMap<Long, BigDecimal>();
-        if (forexRates != null) {
-            for (var r : forexRates) {
-                ratesByQuote.put(r.quoteCurrencyId(), r.price());
-            }
-        }
-        if (cryptoRates != null) {
-            for (var r : cryptoRates) {
-                ratesByQuote.put(r.quoteCurrencyId(), r.price());
-            }
-        }
+        var allRates = new java.util.ArrayList<com.finance.fx.FxModuleRateDto>();
+        if (forexRates != null) allRates.addAll(forexRates);
+        if (cryptoRates != null) allRates.addAll(cryptoRates);
 
         var balances = personBalanceRepo.getPersonalBalancesByPersonId(personId);
         var balanceCurrencyMap = balances.stream()
@@ -184,14 +176,23 @@ public class DepositProfitService {
                 continue;
             }
 
-            BigDecimal rate = ratesByQuote.get(currencyId);
-            if (rate == null || rate.compareTo(BigDecimal.ZERO) == 0) {
-                total = total.add(tx.getAmount());
+            var direct = allRates.stream()
+                    .filter(r -> r.baseCurrencyId().equals(currencyId) && r.quoteCurrencyId().equals(baseCurrencyId))
+                    .findFirst();
+            if (direct.isPresent()) {
+                total = total.add(tx.getAmount().multiply(direct.get().price()));
                 continue;
             }
 
-            BigDecimal converted = tx.getAmount().divide(rate, 8, RoundingMode.HALF_UP);
-            total = total.add(converted);
+            var inverse = allRates.stream()
+                    .filter(r -> r.baseCurrencyId().equals(baseCurrencyId) && r.quoteCurrencyId().equals(currencyId))
+                    .findFirst();
+            if (inverse.isPresent() && inverse.get().price().compareTo(BigDecimal.ZERO) != 0) {
+                total = total.add(tx.getAmount().divide(inverse.get().price(), 8, RoundingMode.HALF_UP));
+                continue;
+            }
+
+            total = total.add(tx.getAmount());
         }
 
         return total.setScale(2, RoundingMode.HALF_UP);
