@@ -10,5 +10,6 @@ public enum PersonSpendingType {
     BUSINESS,
     INVESTMENT,
     TRADE,
+    ART,
     OTHER
 }

@@ -21,7 +21,7 @@ import { useForm, Controller, useWatch } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
 const ProfitTypes = ["SALARY", "DEPOSIT", "BUSINESS", "INVESTMENT", "TRADE", "GIFT", "OTHER"];
-const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "SUBSCRIPTION", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "OTHER"];
+const SpendingTypes = ["FOOD_STORE", "FOOD_RESTAURANT", "SUBSCRIPTION", "RENT", "UTILITIES", "ENTERTAINMENT", "BUSINESS", "INVESTMENT", "TRADE", "ART", "OTHER"];
 const BalanceTypes = ["REGULAR", "CRYPTO", "DEPOSIT"];
 
 // Safe Currency Formatter (supports crypto with up to 8 decimal places)
