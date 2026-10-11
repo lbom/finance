@@ -580,10 +580,19 @@ export const Personal = () => {
         currency: currencyMap.get(item.currencyId),
         institution: institutionMap.get(item.institutionId)
     }));
+    const getBalanceOptionLabel = (balance) => {
+        if (!balance) return '—';
+        const inst = balance.institution?.name || 'Institution';
+        const curr = balance.currency?.symbol || '—';
+        const type = balance.type || 'REGULAR';
+        const extra = type === 'DEPOSIT' && balance.interestRate != null ? ` (${balance.interestRate}%/yr)` : '';
+        return `${inst} · ${curr} · ${type}${extra}`;
+    };
+
     const balanceLabelMap = new Map(
         (balanceRows || []).map((balance) => ([
             balance.id,
-            `${balance.institution?.name || 'Institution'} · ${balance.currency?.symbol || '—'}`
+            getBalanceOptionLabel(balance)
         ]))
     );
 
@@ -609,15 +618,22 @@ export const Personal = () => {
             width: 120,
             align: 'center',
             headerAlign: 'center',
-            renderCell: (params) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    <Chip
-                        label={params.value?.replace(/_/g, ' ')}
-                        size="small"
-                        sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }}
-                    />
-                </Box>
-            )
+            renderCell: (params) => {
+                const isSpending = params.value === 'SPENDING';
+                return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <Chip
+                            label={params.value?.replace(/_/g, ' ')}
+                            size="small"
+                            sx={{
+                                bgcolor: isSpending ? '#FFEBEE' : 'secondary.main',
+                                color: isSpending ? 'error.dark' : 'primary.dark',
+                                fontWeight: 600
+                            }}
+                        />
+                    </Box>
+                );
+            }
         },
         {
             field: 'displayCategory',
@@ -679,11 +695,23 @@ export const Personal = () => {
             width: 130,
             align: 'right',
             headerAlign: 'right',
-            renderCell: (params) => (
-                <Typography fontWeight="bold" fontSize="0.9rem" sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    {formatMoney(params.value)}
-                </Typography>
-            )
+            renderCell: (params) => {
+                const isSpending = params.row.type === 'SPENDING';
+                return (
+                    <Typography
+                        fontWeight="bold"
+                        fontSize="0.9rem"
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            height: '100%',
+                            color: isSpending ? 'error.main' : 'primary.main'
+                        }}
+                    >
+                        {formatMoney(params.value)}
+                    </Typography>
+                );
+            }
         },
         {
             field: 'isActive',
@@ -1074,7 +1102,7 @@ export const Personal = () => {
                                     >
                                         {(balanceRows || []).map((balance) => (
                                             <MenuItem key={balance.id} value={balance.id}>
-                                                {balance.institution?.name || 'Institution'} · {balance.currency?.symbol || '—'}
+                                                {getBalanceOptionLabel(balance)}
                                             </MenuItem>
                                         ))}
                                     </TextField>
@@ -1367,7 +1395,7 @@ export const Personal = () => {
                                     >
                                         {(balanceRows || []).map((balance) => (
                                             <MenuItem key={balance.id} value={balance.id}>
-                                                {balance.institution?.name || 'Institution'} · {balance.currency?.symbol || '—'}
+                                                {getBalanceOptionLabel(balance)}
                                             </MenuItem>
                                         ))}
                                     </TextField>
