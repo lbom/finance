@@ -19,13 +19,15 @@ import {
     Add,
     CurrencyExchange,
     CorporateFare,
-    ConfirmationNumber
+    ConfirmationNumber,
+    SwapHoriz
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { Controller, useForm } from 'react-hook-form';
 import { api } from '../api/endpoints';
 
 const SymbolGroups = ['SECURITY', 'FUTURES', 'CRYPTO', 'DEPOSIT', 'POLYMARKET'];
+const PairTypes = ['FOREX', 'CRYPTO'];
 
 const DictionaryCard = ({ title, subtitle, icon, onAdd, rows, columns, loading }) => (
     <Paper sx={{ p: 0, borderRadius: 3, overflow: 'hidden' }}>
@@ -72,6 +74,7 @@ export const Dictionaries = () => {
     const [currencyOpen, setCurrencyOpen] = useState(false);
     const [institutionOpen, setInstitutionOpen] = useState(false);
     const [symbolOpen, setSymbolOpen] = useState(false);
+    const [pairOpen, setPairOpen] = useState(false);
 
     const { data: currencies, isLoading: currenciesLoading } = useQuery({
         queryKey: ['currencies'],
@@ -84,6 +87,10 @@ export const Dictionaries = () => {
     const { data: symbols, isLoading: symbolsLoading } = useQuery({
         queryKey: ['symbols'],
         queryFn: api.dictionary.symbol.list
+    });
+    const { data: pairs, isLoading: pairsLoading } = useQuery({
+        queryKey: ['pairs'],
+        queryFn: api.dictionary.pair.list
     });
     const createCurrency = useMutation({
         mutationFn: api.dictionary.currency.create,
@@ -109,6 +116,14 @@ export const Dictionaries = () => {
             resetSymbol();
         }
     });
+    const createPair = useMutation({
+        mutationFn: api.dictionary.pair.create,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['pairs']);
+            setPairOpen(false);
+            resetPair();
+        }
+    });
     const {
         control: currencyControl,
         handleSubmit: handleCurrencySubmit,
@@ -131,6 +146,16 @@ export const Dictionaries = () => {
         reset: resetSymbol
     } = useForm({
         defaultValues: { symbol: '', group: SymbolGroups[0], institutionId: '' }
+    });
+
+    const {
+        control: pairControl,
+        handleSubmit: handlePairSubmit,
+        reset: resetPair,
+        setValue: setValuePair,
+        watch: watchPair
+    } = useForm({
+        defaultValues: { baseCurrencyId: '', quoteCurrencyId: '', symbol: '', type: 'FOREX' }
     });
     const institutionMap = new Map((institutions || []).map((inst) => [inst.id, inst]));
     const currencyMap = new Map((currencies || []).map((currency) => [currency.id, currency]));
@@ -252,12 +277,112 @@ export const Dictionaries = () => {
         }
     ];
 
+    const pairRows = (pairs || []).map((item) => ({
+        ...item,
+        baseCurrency: currencyMap.get(item.baseCurrencyId),
+        quoteCurrency: currencyMap.get(item.quoteCurrencyId)
+    }));
+    const pairColumns = [
+        {
+            field: 'symbol',
+            headerName: 'Symbol',
+            width: 130,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip label={params.value} size="small" sx={{ bgcolor: 'secondary.main', color: 'primary.dark', fontWeight: 600 }} />
+                </Box>
+            )
+        },
+        {
+            field: 'type',
+            headerName: 'Type',
+            width: 110,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Chip
+                        label={params.value}
+                        size="small"
+                        sx={{
+                            bgcolor: params.value === 'CRYPTO' ? '#FFF3E0' : 'rgba(0,0,0,0.05)',
+                            color: params.value === 'CRYPTO' ? 'warning.dark' : 'text.secondary',
+                            fontWeight: 600
+                        }}
+                    />
+                </Box>
+            )
+        },
+        {
+            field: 'baseCurrency',
+            headerName: 'Base Currency',
+            flex: 1,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value ? `${params.value.symbol} (${params.value.name})` : '—'}
+                    </Typography>
+                </Box>
+            )
+        },
+        {
+            field: 'quoteCurrency',
+            headerName: 'Quote Currency',
+            flex: 1,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {params.value ? `${params.value.symbol} (${params.value.name})` : '—'}
+                    </Typography>
+                </Box>
+            )
+        }
+    ];
+
+    const handleBaseCurrencyChange = (e, field) => {
+        const val = Number(e.target.value);
+        field.onChange(val);
+        const baseCurr = currencyMap.get(val);
+        const quoteId = watchPair('quoteCurrencyId');
+        const quoteCurr = currencyMap.get(Number(quoteId));
+        if (baseCurr && quoteCurr) {
+            setValuePair('symbol', `${baseCurr.symbol}${quoteCurr.symbol}`);
+        }
+        const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'USDT'];
+        if ((baseCurr && cryptoSymbols.includes(baseCurr.symbol?.toUpperCase())) ||
+            (quoteCurr && cryptoSymbols.includes(quoteCurr.symbol?.toUpperCase()))) {
+            setValuePair('type', 'CRYPTO');
+        }
+    };
+
+    const handleQuoteCurrencyChange = (e, field) => {
+        const val = Number(e.target.value);
+        field.onChange(val);
+        const quoteCurr = currencyMap.get(val);
+        const baseId = watchPair('baseCurrencyId');
+        const baseCurr = currencyMap.get(Number(baseId));
+        if (baseCurr && quoteCurr) {
+            setValuePair('symbol', `${baseCurr.symbol}${quoteCurr.symbol}`);
+        }
+        const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'USDT'];
+        if ((baseCurr && cryptoSymbols.includes(baseCurr.symbol?.toUpperCase())) ||
+            (quoteCurr && cryptoSymbols.includes(quoteCurr.symbol?.toUpperCase()))) {
+            setValuePair('type', 'CRYPTO');
+        }
+    };
+
     return (
         <Box sx={{ pb: 5 }}>
             <Box mb={4}>
                 <Typography variant="h4" gutterBottom>Dictionaries</Typography>
                 <Typography variant="body1" color="text.secondary">
-                    Manage currencies, institutions, and symbols.
+                    Manage currencies, institutions, symbols, and FX pairs.
                 </Typography>
             </Box>
 
@@ -293,6 +418,27 @@ export const Dictionaries = () => {
                         rows={symbolRows}
                         columns={symbolColumns}
                         loading={symbolsLoading || institutionsLoading}
+                    />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <DictionaryCard
+                        title="FX Pairs"
+                        subtitle="Forex and crypto exchange pairs"
+                        icon={<SwapHoriz fontSize="small" />}
+                        onAdd={() => {
+                            const firstCurr = currencies?.[0];
+                            const secondCurr = currencies?.[1];
+                            resetPair({
+                                baseCurrencyId: firstCurr?.id || '',
+                                quoteCurrencyId: secondCurr?.id || '',
+                                symbol: firstCurr && secondCurr ? `${firstCurr.symbol}${secondCurr.symbol}` : '',
+                                type: 'FOREX'
+                            });
+                            setPairOpen(true);
+                        }}
+                        rows={pairRows}
+                        columns={pairColumns}
+                        loading={pairsLoading || currenciesLoading}
                     />
                 </Grid>
             </Grid>
@@ -421,6 +567,97 @@ export const Dictionaries = () => {
                         <Button onClick={() => setSymbolOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
                         <Button type="submit" variant="contained" disabled={createSymbol.isLoading} sx={{ borderRadius: 2, px: 3 }}>
                             {createSymbol.isLoading ? 'Saving...' : 'Create'}
+                        </Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
+
+            <Dialog open={pairOpen} onClose={() => setPairOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
+                <form onSubmit={handlePairSubmit((data) => createPair.mutate({
+                    baseCurrencyId: Number(data.baseCurrencyId),
+                    quoteCurrencyId: Number(data.quoteCurrencyId),
+                    symbol: data.symbol?.toUpperCase().trim(),
+                    type: data.type || 'FOREX'
+                }))}>
+                    <DialogTitle>
+                        <Typography variant="h6" fontWeight="bold">New FX Pair</Typography>
+                    </DialogTitle>
+                    <DialogContent>
+                        <Box display="flex" flexDirection="column" gap={2} mt={1}>
+                            <Controller
+                                name="baseCurrencyId"
+                                control={pairControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Base Currency"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                        onChange={(e) => handleBaseCurrencyChange(e, field)}
+                                    >
+                                        {(currencies || []).map((curr) => (
+                                            <MenuItem key={curr.id} value={curr.id}>
+                                                {curr.symbol} — {curr.name}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+                            <Controller
+                                name="quoteCurrencyId"
+                                control={pairControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Quote Currency"
+                                        fullWidth
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                        onChange={(e) => handleQuoteCurrencyChange(e, field)}
+                                    >
+                                        {(currencies || []).map((curr) => (
+                                            <MenuItem key={curr.id} value={curr.id}>
+                                                {curr.symbol} — {curr.name}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+                            <Controller
+                                name="type"
+                                control={pairControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField {...field} select label="Type" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
+                                        {PairTypes.map((t) => (
+                                            <MenuItem key={t} value={t}>{t}</MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+                            <Controller
+                                name="symbol"
+                                control={pairControl}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Symbol"
+                                        placeholder="e.g. BTCUSDT, USDEUR"
+                                        fullWidth
+                                        InputProps={{ sx: { borderRadius: 2 } }}
+                                    />
+                                )}
+                            />
+                        </Box>
+                    </DialogContent>
+                    <DialogActions sx={{ p: 3 }}>
+                        <Button onClick={() => setPairOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
+                        <Button type="submit" variant="contained" disabled={createPair.isLoading} sx={{ borderRadius: 2, px: 3 }}>
+                            {createPair.isLoading ? 'Saving...' : 'Create'}
                         </Button>
                     </DialogActions>
                 </form>

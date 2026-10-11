@@ -5,5 +5,7 @@ import jakarta.annotation.Nonnull;
 public record PairDto(
     Long id,
     @Nonnull Long baseCurrencyId,
-    @Nonnull Long quoteCurrencyId
+    @Nonnull Long quoteCurrencyId,
+    String symbol,
+    PairType type
 ) {}
