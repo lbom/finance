@@ -928,7 +928,7 @@ export const Personal = () => {
                     </Box>
                     <Box sx={{ p: 2 }}>
                         <Grid container spacing={2}>
-                            {(balanceRows || []).slice(0, 10).map((balance) => (
+                            {(balanceRows || []).map((balance) => (
                                 <Grid key={balance.id} item xs={12} sm={6} md={4} lg={3}>
                                     <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
                                         <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
