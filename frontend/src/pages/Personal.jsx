@@ -265,24 +265,24 @@ export const Personal = () => {
     const addTransaction = useMutation({
         mutationFn: (data) => api.personal.create(activePersonId, data),
         onSuccess: () => {
-            queryClient.invalidateQueries(['personal', activePersonId]);
-            queryClient.invalidateQueries(['balances', activePersonId]);
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId] });
+            queryClient.invalidateQueries({ queryKey: ['balances', activePersonId] });
             handleClose();
         }
     });
     const updateTransaction = useMutation({
         mutationFn: ({ transactionId, payload }) => api.personal.update(activePersonId, transactionId, payload),
         onSuccess: () => {
-            queryClient.invalidateQueries(['personal', activePersonId]);
-            queryClient.invalidateQueries(['balances', activePersonId]);
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId] });
+            queryClient.invalidateQueries({ queryKey: ['balances', activePersonId] });
             handleClose();
         }
     });
     const deleteTransaction = useMutation({
         mutationFn: (transactionId) => api.personal.delete(activePersonId, transactionId),
         onSuccess: () => {
-            queryClient.invalidateQueries(['personal', activePersonId]);
-            queryClient.invalidateQueries(['balances', activePersonId]);
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId] });
+            queryClient.invalidateQueries({ queryKey: ['balances', activePersonId] });
         }
     });
     const saveRecurrent = useMutation({
@@ -292,37 +292,37 @@ export const Personal = () => {
                 : api.recurrent.create(activePersonId, payload)
         ),
         onSuccess: () => {
-            queryClient.invalidateQueries(['recurrent', activePersonId]);
+            queryClient.invalidateQueries({ queryKey: ['recurrent', activePersonId] });
             handleRecurrentClose();
         }
     });
     const deleteRecurrent = useMutation({
         mutationFn: (recurrentId) => api.recurrent.delete(activePersonId, recurrentId),
         onSuccess: () => {
-            queryClient.invalidateQueries(['recurrent', activePersonId]);
+            queryClient.invalidateQueries({ queryKey: ['recurrent', activePersonId] });
         }
     });
     const saveBalance = useMutation({
         mutationFn: (payload) => api.balance.create(activePersonId, payload),
         onSuccess: () => {
-            queryClient.invalidateQueries(['balances', activePersonId]);
-            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
-            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
+            queryClient.invalidateQueries({ queryKey: ['balances', activePersonId] });
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId, 'PROFIT'] });
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId, 'SPENDING'] });
             handleBalanceClose();
         }
     });
     const deleteBalance = useMutation({
         mutationFn: (balanceId) => api.balance.delete(activePersonId, balanceId),
         onSuccess: () => {
-            queryClient.invalidateQueries(['balances', activePersonId]);
-            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
-            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
+            queryClient.invalidateQueries({ queryKey: ['balances', activePersonId] });
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId, 'PROFIT'] });
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId, 'SPENDING'] });
         }
     });
     const createPerson = useMutation({
         mutationFn: api.person.create,
         onSuccess: () => {
-            queryClient.invalidateQueries(['persons']);
+            queryClient.invalidateQueries({ queryKey: ['persons'] });
             setPersonOpen(false);
             resetPerson();
         }
@@ -331,23 +331,23 @@ export const Personal = () => {
     const processRecurrent = useMutation({
         mutationFn: () => api.recurrent.process(activePersonId, true),
         onSuccess: () => {
-            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
-            queryClient.invalidateQueries(['personal', activePersonId, 'SPENDING']);
-            queryClient.invalidateQueries(['balances', activePersonId]);
-            queryClient.invalidateQueries(['recurrent', activePersonId]);
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId, 'PROFIT'] });
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId, 'SPENDING'] });
+            queryClient.invalidateQueries({ queryKey: ['balances', activePersonId] });
+            queryClient.invalidateQueries({ queryKey: ['recurrent', activePersonId] });
         }
     });
 
     const applyDepositProfits = useMutation({
         mutationFn: () => api.balance.applyDepositProfits(activePersonId, true),
         onSuccess: () => {
-            queryClient.invalidateQueries(['personal', activePersonId, 'PROFIT']);
-            queryClient.invalidateQueries(['balances', activePersonId]);
+            queryClient.invalidateQueries({ queryKey: ['personal', activePersonId, 'PROFIT'] });
+            queryClient.invalidateQueries({ queryKey: ['balances', activePersonId] });
         }
     });
 
     const today = new Date().toISOString().slice(0, 10);
-    const { control, handleSubmit, reset } = useForm({
+    const { control, handleSubmit, reset, formState: { errors } } = useForm({
         defaultValues: { category: '', amount: '', localDate: today, details: '', balanceId: '' }
     });
     const {
@@ -416,12 +416,13 @@ export const Personal = () => {
     const handleOpen = (section) => {
         setActiveSection(section);
         setTransactionEditing(null);
+        const defaultBalanceId = activeBalanceId ?? (balances?.[0]?.id || '');
         reset({
             category: section === 'PROFIT' ? ProfitTypes[0] : SpendingTypes[0],
             amount: '',
             localDate: today,
             details: '',
-            balanceId: activeBalanceId || ''
+            balanceId: defaultBalanceId
         });
         setDialogOpen(true);
     };
@@ -443,7 +444,7 @@ export const Personal = () => {
     };
 
     const onSubmit = (data) => {
-        if (!canTransact) return;
+        if (!activePersonId || !data.balanceId) return;
         // Construct payload to match PersonalTransactionDto
         const payload = {
             type: activeSection,
@@ -908,10 +909,10 @@ export const Personal = () => {
                                     variant="outlined"
                                     color="secondary"
                                     onClick={() => applyDepositProfits.mutate()}
-                                    disabled={!activePersonId || applyDepositProfits.isLoading}
+                                    disabled={!activePersonId || applyDepositProfits.isPending}
                                     sx={{ borderRadius: 2, textTransform: 'none' }}
                                 >
-                                    {applyDepositProfits.isLoading ? 'Applying...' : 'Apply Deposit Profit'}
+                                    {applyDepositProfits.isPending ? 'Applying...' : 'Apply Deposit Profit'}
                                 </Button>
                             )}
                             <Button
@@ -953,7 +954,7 @@ export const Personal = () => {
                                                         onClick={() => deleteBalance.mutate(balance.id)}
                                                         size="small"
                                                         aria-label="Delete"
-                                                        disabled={!activePersonId || deleteBalance.isLoading}
+                                                        disabled={!activePersonId || deleteBalance.isPending}
                                                     >
                                                         <DeleteOutline fontSize="small" />
                                                     </IconButton>
@@ -1031,10 +1032,10 @@ export const Personal = () => {
                                 size="small"
                                 variant="outlined"
                                 onClick={() => processRecurrent.mutate()}
-                                disabled={!canTransact || processRecurrent.isLoading}
+                                disabled={!canTransact || processRecurrent.isPending}
                                 sx={{ borderRadius: 2, textTransform: 'none' }}
                             >
-                                {processRecurrent.isLoading ? 'Processing...' : 'Run Due Jobs'}
+                                {processRecurrent.isPending ? 'Processing...' : 'Run Due Jobs'}
                             </Button>
                             <Button
                                 size="small"
@@ -1076,25 +1077,25 @@ export const Personal = () => {
 
             <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <DialogTitle>
-                        <Typography variant="h6" fontWeight="bold">
-                            {transactionEditing
-                                ? (activeSection === 'PROFIT' ? 'Edit Income' : 'Edit Expense')
-                                : (activeSection === 'PROFIT' ? 'Add Income' : 'Log Expense')}
-                        </Typography>
+                    <DialogTitle sx={{ fontWeight: 'bold' }}>
+                        {transactionEditing
+                            ? (activeSection === 'PROFIT' ? 'Edit Income' : 'Edit Expense')
+                            : (activeSection === 'PROFIT' ? 'Add Income' : 'Log Expense')}
                     </DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
                             <Controller
                                 name="balanceId"
                                 control={control}
-                                rules={{ required: true }}
+                                rules={{ required: 'Balance is required' }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
                                         select
                                         label="Balance"
                                         fullWidth
+                                        error={!!errors.balanceId}
+                                        helperText={errors.balanceId?.message}
                                         SelectProps={{ sx: { borderRadius: 2 } }}
                                         disabled={!activePersonId || balancesLoading || !(balanceRows || []).length}
                                     >
@@ -1109,9 +1110,17 @@ export const Personal = () => {
                             <Controller
                                 name="category"
                                 control={control}
-                                rules={{ required: true }}
+                                rules={{ required: 'Category is required' }}
                                 render={({ field }) => (
-                                    <TextField {...field} select label="Category" fullWidth SelectProps={{ sx: { borderRadius: 2 } }}>
+                                    <TextField
+                                        {...field}
+                                        select
+                                        label="Category"
+                                        fullWidth
+                                        error={!!errors.category}
+                                        helperText={errors.category?.message}
+                                        SelectProps={{ sx: { borderRadius: 2 } }}
+                                    >
                                         {(activeSection === 'PROFIT' ? ProfitTypes : SpendingTypes).map(opt => (
                                             <MenuItem key={opt} value={opt}>{opt.replace(/_/g, ' ')}</MenuItem>
                                         ))}
@@ -1121,7 +1130,10 @@ export const Personal = () => {
                             <Controller
                                 name="amount"
                                 control={control}
-                                rules={{ required: true, min: 0 }}
+                                rules={{
+                                    required: 'Amount is required',
+                                    validate: (v) => (!isNaN(Number(v)) && Number(v) > 0) || 'Amount must be greater than 0'
+                                }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
@@ -1129,6 +1141,8 @@ export const Personal = () => {
                                         type="number"
                                         inputProps={{ step: "any" }}
                                         fullWidth
+                                        error={!!errors.amount}
+                                        helperText={errors.amount?.message}
                                         InputProps={{
                                             startAdornment: '$',
                                             sx: { borderRadius: 2, fontSize: '1.2rem', fontWeight: 600 }
@@ -1139,13 +1153,15 @@ export const Personal = () => {
                             <Controller
                                 name="localDate"
                                 control={control}
-                                rules={{ required: true }}
+                                rules={{ required: 'Date is required' }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
                                         label="Date"
                                         type="date"
                                         fullWidth
+                                        error={!!errors.localDate}
+                                        helperText={errors.localDate?.message}
                                         InputLabelProps={{ shrink: true }}
                                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                                     />
@@ -1154,7 +1170,6 @@ export const Personal = () => {
                             <Controller
                                 name="details"
                                 control={control}
-                                rules={{ required: true }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
@@ -1173,11 +1188,11 @@ export const Personal = () => {
                         <Button
                             type="submit"
                             variant="contained"
-                            disabled={addTransaction.isLoading || updateTransaction.isLoading}
+                            disabled={addTransaction.isPending || updateTransaction.isPending}
                             color={activeSection === 'PROFIT' ? "success" : "error"}
                             sx={{ borderRadius: 2, px: 3 }}
                         >
-                            {(addTransaction.isLoading || updateTransaction.isLoading) ? 'Saving...' : (transactionEditing ? 'Update' : 'Save')}
+                            {(addTransaction.isPending || updateTransaction.isPending) ? 'Saving...' : (transactionEditing ? 'Update' : 'Save')}
                         </Button>
                     </DialogActions>
                 </form>
@@ -1185,10 +1200,8 @@ export const Personal = () => {
 
             <Dialog open={balanceOpen} onClose={handleBalanceClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
                 <form onSubmit={handleBalanceSubmit(onSubmitBalance)}>
-                    <DialogTitle>
-                        <Typography variant="h6" fontWeight="bold">
-                            {balanceEditing ? 'Update Balance' : 'New Balance'}
-                        </Typography>
+                    <DialogTitle sx={{ fontWeight: 'bold' }}>
+                        {balanceEditing ? 'Update Balance' : 'New Balance'}
                     </DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
@@ -1303,10 +1316,10 @@ export const Personal = () => {
                         <Button
                             type="submit"
                             variant="contained"
-                            disabled={saveBalance.isLoading}
+                            disabled={saveBalance.isPending}
                             sx={{ borderRadius: 2, px: 3 }}
                         >
-                            {saveBalance.isLoading ? 'Saving...' : (balanceEditing ? 'Update' : 'Create')}
+                            {saveBalance.isPending ? 'Saving...' : (balanceEditing ? 'Update' : 'Create')}
                         </Button>
                     </DialogActions>
                 </form>
@@ -1314,9 +1327,7 @@ export const Personal = () => {
 
             <Dialog open={personOpen} onClose={handlePersonClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
                 <form onSubmit={handlePersonSubmit((data) => createPerson.mutate(data))}>
-                    <DialogTitle>
-                        <Typography variant="h6" fontWeight="bold">New Person</Typography>
-                    </DialogTitle>
+                    <DialogTitle sx={{ fontWeight: 'bold' }}>New Person</DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
                             <Controller
@@ -1334,10 +1345,10 @@ export const Personal = () => {
                         <Button
                             type="submit"
                             variant="contained"
-                            disabled={createPerson.isLoading}
+                            disabled={createPerson.isPending}
                             sx={{ borderRadius: 2, px: 3 }}
                         >
-                            {createPerson.isLoading ? 'Saving...' : 'Create'}
+                            {createPerson.isPending ? 'Saving...' : 'Create'}
                         </Button>
                     </DialogActions>
                 </form>
@@ -1345,10 +1356,8 @@ export const Personal = () => {
 
             <Dialog open={recurrentOpen} onClose={handleRecurrentClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 3 } }}>
                 <form onSubmit={handleRecurrentSubmit(onSubmitRecurrent)}>
-                    <DialogTitle>
-                        <Typography variant="h6" fontWeight="bold">
-                            {recurrentEditing ? 'Update Recurring Transaction' : 'New Recurring Transaction'}
-                        </Typography>
+                    <DialogTitle sx={{ fontWeight: 'bold' }}>
+                        {recurrentEditing ? 'Update Recurring Transaction' : 'New Recurring Transaction'}
                     </DialogTitle>
                     <DialogContent>
                         <Box display="flex" flexDirection="column" gap={2} mt={1}>
@@ -1484,10 +1493,10 @@ export const Personal = () => {
                         <Button
                             type="submit"
                             variant="contained"
-                            disabled={saveRecurrent.isLoading}
+                            disabled={saveRecurrent.isPending}
                             sx={{ borderRadius: 2, px: 3 }}
                         >
-                            {saveRecurrent.isLoading ? 'Saving...' : (recurrentEditing ? 'Update' : 'Create')}
+                            {saveRecurrent.isPending ? 'Saving...' : (recurrentEditing ? 'Update' : 'Create')}
                         </Button>
                     </DialogActions>
                 </form>
